@@ -1,0 +1,5 @@
+/_env
+/.env
+*.code-workspace
+*.pyc
+__pycache__

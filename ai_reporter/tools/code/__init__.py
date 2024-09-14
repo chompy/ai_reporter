@@ -1,0 +1,88 @@
+from typing import Iterable, Optional
+from ...utils import dict_get_type
+from ..base import BaseTool
+from ..response import ToolResponse
+from ...input.prompt import Prompt
+from .fetcher import get_fetcher
+import logging
+from ...error.bot import ToolPropertyInvalidError
+from ...input.property import PropertyDefinition
+
+from .tools import AVAILABLE_TOOLS
+
+DEFAULT_SYSTEM_PROMPT = """
+Adopt the role of a quality assurance (QA) engineer.
+You will be asked to perform an analysis of a code base. You have access to tools that will allow you the examine the code base. Perform the task in as few steps as possible. When you have reached a conclusion use the `done` tool to finish.
+"""
+
+AVAIALBLE_TOOLS = []
+
+class CodeTool(BaseTool):
+
+    def __init__(
+        self, 
+        code_bases : Iterable[str],
+        system_prompt : Optional[str] = None,
+        max_iterations : Optional[int] = None,
+        max_error_retries : Optional[int] = None,
+        logger : Optional[logging.Logger] = None, **kwargs
+    ):
+        super().__init__(logger=logger, **kwargs)
+        self.code_bases = code_bases
+        self.max_iterations = max_iterations
+        self.max_error_retries = max_error_retries
+        self.system_prompt = system_prompt if system_prompt else DEFAULT_SYSTEM_PROMPT
+
+    @staticmethod
+    def name() -> str:
+        return "code"
+
+    @classmethod
+    def definition(cls, code_bases : Iterable[str], **kwargs) -> dict:
+        return {
+            "name": cls.name(),
+            "description": "Ask a large language model to examine a code base and provide a summary of its findings.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "code_base": {
+                        "type": "string",
+                        "description": "The code base to examine.",
+                        "enum": list(code_bases)
+                    },
+                    "prompt": {
+                        "type": "string",
+                        "description": "Prompt for the large language model."
+                    }
+                },
+                "required": ["repository", "prompt"]
+            }
+        }
+
+
+    def execute(self, **kwargs):
+        super(self.__class__, self).execute(**kwargs)
+
+        # ensure code base bot provides is defined
+        code_base = dict_get_type(kwargs, "code_base", str)
+        if code_base not in self.code_bases: raise ToolPropertyInvalidError(self.name(), "code_base")
+
+        # find fetcher for code base
+        fetcher_name, key = code_base.split(":")
+        fetchers_config = dict_get_type(self.args, fetcher_name, dict, {})
+        fetcher = get_fetcher(fetcher_name, key, fetchers_config, self.logger)
+
+        # build prompt for code bot
+        out = ToolResponse()
+        out.prompt = Prompt(
+            output_properties=[
+                PropertyDefinition(name="report", description="A report of your findings.", required=True)
+            ],
+            user_prompt=dict_get_type(kwargs, "prompt", str),
+            system_prompt=self.system_prompt,
+            max_iterations=self.max_iterations if self.max_iterations else 15,
+            max_error_retry=self.max_error_retries if self.max_error_retries else 3,
+            tools=dict(map(lambda t: (t.name(), {"fetcher": fetcher}), AVAILABLE_TOOLS))
+        )
+
+        return out
