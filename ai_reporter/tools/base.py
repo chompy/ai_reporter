@@ -6,8 +6,8 @@ from .response import ToolResponse
 class BaseTool:
 
     def __init__(self, logger : Optional[logging.Logger] = None, **kwargs):
-        self.args = kwargs
         self.logger = logger
+        self.args = kwargs
 
     @staticmethod
     @abstractmethod

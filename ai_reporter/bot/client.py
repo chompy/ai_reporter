@@ -2,15 +2,19 @@ import logging
 from typing import Iterable, Optional, Tuple
 
 import openai
-from openai.types.chat import ChatCompletionMessageParam, ChatCompletionSystemMessageParam, ChatCompletionUserMessageParam, ChatCompletionContentPartImageParam
+from openai.types.chat import (
+    ChatCompletionContentPartImageParam,
+    ChatCompletionMessageParam,
+    ChatCompletionSystemMessageParam,
+    ChatCompletionUserMessageParam,
+)
 from openai.types.chat.chat_completion_content_part_image_param import ImageURL
-
-from ..tools.response import ToolResponse
 
 from ..error.bot import BotMaxIterationsError, MalformedBotResponseError
 from ..input.image import Image
 from ..input.prompt import Prompt
 from ..tools.handler import ToolHandler
+from ..tools.response import ToolResponse
 from ..utils import dict_get_type
 
 class BotClient:
@@ -111,14 +115,15 @@ class BotClient:
         response_message = response.choices[0].message
         out.append(response_message.to_dict())
         if response_message.tool_calls:
-            tool_responses = list(map(lambda c: tool_handler.call_openai(c), response_message.tool_calls))
-            for resp in tool_responses:
+            for call in response_message.tool_calls:
+                resp = tool_handler.call_openai(call)
                 if resp.prompt:
                     sub_resp = self.run(resp.prompt)
                     resp.prompt = None
-                    resp.bot_message = dict_get_type(sub_resp, "response", str)
+                    resp.bot_message = dict_get_type(sub_resp, "report", str)
                     resp.values = sub_resp
                     resp.success = dict_get_type(sub_resp, "success", bool, True)
                 if resp.done: return [], resp
-            return list(map(lambda r: r.to_bot(), tool_responses)), None
+                out.append(resp.to_bot())
+            return out, None
         return [], None

@@ -1,8 +1,9 @@
 import os
 from typing import Optional, Union
-from .utils import dict_get_type, dict_get_type_none
 
 import yaml
+
+from .utils import dict_get_type, dict_get_type_none
 
 DEFAULT_CONFIG_PATH = "assets/config_default.yaml"
 

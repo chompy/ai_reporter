@@ -7,7 +7,7 @@ def dict_get_type(data : dict, key : str, expected_type : type[T], default : Opt
     for k in key.split("."):
         if type(value) is not dict or k not in value: 
             if default: return default
-            raise ValueError("value not defined at key '%s%s'" % (key, "%s:" if source else ""))
+            raise ValueError("value not defined at key '%s%s'" % ((("%s:" % source) if source else ""), key))
         value = value.get(k, {})
     if isinstance(value, expected_type): return value
     raise TypeError("unexpected type at key '%s%s', expected %s but got %s" % (key, "%s:" if source else "", expected_type, type(value)))

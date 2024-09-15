@@ -11,7 +11,7 @@ class DoneTool(BaseTool):
         return "done"
 
     @classmethod
-    def definition(cls, properties : Iterable[PropertyDefinition], **kwargs) -> dict:
+    def definition(cls, properties : Iterable[PropertyDefinition]) -> dict:
         return {
             "name": cls.name(),
             "description": "Finish your analysis.",

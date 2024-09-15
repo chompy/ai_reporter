@@ -25,9 +25,11 @@ class CodeTool(BaseTool):
         system_prompt : Optional[str] = None,
         max_iterations : Optional[int] = None,
         max_error_retries : Optional[int] = None,
-        logger : Optional[logging.Logger] = None, **kwargs
+        logger : Optional[logging.Logger] = None,
+        **kwargs
     ):
-        super().__init__(logger=logger, **kwargs)
+        super().__init__(logger=logger)
+        self.args = {"code_bases": code_bases, **kwargs}
         self.code_bases = code_bases
         self.max_iterations = max_iterations
         self.max_error_retries = max_error_retries
@@ -69,8 +71,7 @@ class CodeTool(BaseTool):
 
         # find fetcher for code base
         fetcher_name, key = code_base.split(":")
-        fetchers_config = dict_get_type(self.args, fetcher_name, dict, {})
-        fetcher = get_fetcher(fetcher_name, key, fetchers_config, self.logger)
+        fetcher = get_fetcher(fetcher_name, key, self.args, self.logger)
 
         # build prompt for code bot
         out = ToolResponse()

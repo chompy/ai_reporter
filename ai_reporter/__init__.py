@@ -1,5 +1,5 @@
-from typing import Optional
 import logging
+from typing import Optional
 
 from .bot.client import BotClient
 from .input.prompt import Prompt
