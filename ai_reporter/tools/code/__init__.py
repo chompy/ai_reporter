@@ -1,7 +1,7 @@
 from typing import Iterable, Optional
 from ...utils import dict_get_type
 from ..base import BaseTool
-from ..response import ToolResponse
+from ..response import ToolPromptResponse
 from ...input.prompt import Prompt
 from .fetcher import get_fetcher
 import logging
@@ -74,16 +74,10 @@ class CodeTool(BaseTool):
         fetcher = get_fetcher(fetcher_name, key, self.args, self.logger)
 
         # build prompt for code bot
-        out = ToolResponse()
-        out.prompt = Prompt(
-            output_properties=[
-                PropertyDefinition(name="report", description="A report of your findings.", required=True)
-            ],
+        return ToolPromptResponse(
             user_prompt=dict_get_type(kwargs, "prompt", str),
             system_prompt=self.system_prompt,
             max_iterations=self.max_iterations if self.max_iterations else 15,
             max_error_retry=self.max_error_retries if self.max_error_retries else 3,
             tools=dict(map(lambda t: (t.name(), {"fetcher": fetcher}), AVAILABLE_TOOLS))
         )
-
-        return out

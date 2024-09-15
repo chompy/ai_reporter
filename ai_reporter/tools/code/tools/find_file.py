@@ -1,6 +1,6 @@
 import fnmatch
 
-from ...response import ToolResponse
+from ...response import ToolMessageResponse
 from .base import BaseCodeTool
 
 class FindFileTool(BaseCodeTool):
@@ -31,5 +31,5 @@ class FindFileTool(BaseCodeTool):
         name = kwargs.get("name", "").lstrip("/")
         matched_files = list(filter(lambda f: fnmatch.fnmatch(f, "*/" + name), self.fetcher.file_list()))
         if matched_files:
-            return ToolResponse("\n".join(matched_files), values={"matches": matched_files})
-        return ToolResponse("(no files found)", values={"matches": []})
+            return ToolMessageResponse("\n".join(matched_files))
+        return ToolMessageResponse("(no files found)")

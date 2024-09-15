@@ -1,7 +1,7 @@
 from abc import abstractmethod
 import logging
 from typing import Optional
-from .response import ToolResponse
+from .response import ToolResponseBase
 
 class BaseTool:
 
@@ -23,9 +23,9 @@ class BaseTool:
         }
 
     @abstractmethod
-    def execute(self, **kwargs) -> ToolResponse:
+    def execute(self, **kwargs) -> ToolResponseBase:
         self._check_properties(kwargs)
-        return ToolResponse()
+        return ToolResponseBase()
 
     def _check_properties(self, properties : dict):
         required_properties = self.__class__.definition(**self.args).get("parameters", {}).get("required", [])

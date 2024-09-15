@@ -2,7 +2,7 @@ from typing import Iterable
 
 from ..input.property import PropertyDefinition
 from .base import BaseTool
-from .response import ToolResponse
+from .response import ToolDoneResponse
 
 class DoneTool(BaseTool):
 
@@ -24,4 +24,4 @@ class DoneTool(BaseTool):
 
     def execute(self, **kwargs):
         self._check_properties(kwargs)
-        return ToolResponse(values=kwargs, done=True)
+        return ToolDoneResponse(**kwargs)

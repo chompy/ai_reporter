@@ -1,4 +1,4 @@
-from ...response import ToolResponse
+from ...response import ToolMessageResponse
 from .base import BaseCodeTool
 
 class ReadFileTool(BaseCodeTool):
@@ -34,5 +34,5 @@ class ReadFileTool(BaseCodeTool):
             for i in range(len(lines)):
                 output += "%s\n" % (lines[i])
         except KeyError:
-            return ToolResponse("(file not found)", values={"path": path}, success=False)
-        return ToolResponse(self._santitize_output(output), values={"path": path})
+            return ToolMessageResponse("(file not found)")
+        return ToolMessageResponse(self._santitize_output(output))

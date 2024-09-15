@@ -1,4 +1,4 @@
-from ...response import ToolResponse
+from ...response import ToolMessageResponse
 from .base import BaseCodeTool
 
 class FindStringTool(BaseCodeTool):
@@ -49,5 +49,5 @@ class FindStringTool(BaseCodeTool):
                     line_no += 1
                     if search in line:
                         out += "%s (line %d)\n" % (path, line_no)
-        if not out: return ToolResponse("(no results found)")
-        return ToolResponse(self._santitize_output(out.strip()))
+        if not out: return ToolMessageResponse("(no results found)")
+        return ToolMessageResponse(self._santitize_output(out.strip()))

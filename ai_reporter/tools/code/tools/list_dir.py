@@ -1,6 +1,6 @@
 import os
 
-from ...response import ToolResponse
+from ...response import ToolMessageResponse
 from .base import BaseCodeTool
 
 class ListDirTool(BaseCodeTool):
@@ -36,5 +36,5 @@ class ListDirTool(BaseCodeTool):
         for fetcher_path in self.fetcher.file_list():
             if os.path.dirname(fetcher_path) == path:
                 output += "FILE\t%s\n" % fetcher_path
-        if not output: return ToolResponse("(no results found)")
-        return ToolResponse(self._santitize_output(output))
+        if not output: return ToolMessageResponse("(no results found)")
+        return ToolMessageResponse(self._santitize_output(output))

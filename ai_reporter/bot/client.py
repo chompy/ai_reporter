@@ -14,7 +14,13 @@ from ..error.bot import BotMaxIterationsError, MalformedBotResponseError
 from ..input.image import Image
 from ..input.prompt import Prompt
 from ..tools.handler import ToolHandler
-from ..tools.response import ToolResponse
+from ..tools.response import (
+    ToolDoneResponse,
+    ToolMessageResponse,
+    ToolPromptResponse,
+    ToolResponseBase,
+    ToolBotResponse,
+)
 from ..utils import dict_get_type
 
 class BotClient:
@@ -26,7 +32,7 @@ class BotClient:
         )
         self.logger = logger
 
-    def _log(self, params : dict, message : str = "", level : int = logging.INFO):
+    def _log(self, message : str, params : dict, level : int = logging.INFO):
         params["_module"] = "bot"
         if self.logger: self.logger.log(level, message, extra=params)
 
@@ -51,7 +57,7 @@ class BotClient:
 
         tool_handler = ToolHandler({
             **prompt.tools,
-            "done": {"properties": prompt.output_properties}
+            "done": {"properties": prompt.report_properties}
         }, self.logger)
 
         # prepare initial messages for ai
@@ -61,14 +67,19 @@ class BotClient:
         ]
         if prompt.images: messages.append(self._prepare_image_attachments(prompt.images))
 
-        self._log({
-            "action": "start", "object": "bot", "parameters": {
-                "system_prompt": prompt.system_prompt, "user_prompt": prompt.user_prompt, "image_count": len(prompt.images), "available_tools": prompt.tools.keys()}
-        })
+        self._log("Start bot.", {"action": "start", "object": "bot", "parameters": prompt.to_dict()})
 
         # make iterations until bot/llm completes task or max iterations are reached
         for iteration in range(1, prompt.max_iterations+1):
-            self._log({"action": "pass", "object": "#%d" % iteration})
+            self._log("Bot pass #%d." % iteration, {"action": "pass", "object": "#%d" % iteration})
+
+            # after max iteration reached make only the 'done' tool available, and tell bot to finish its report
+            if iteration == prompt.max_iterations:
+                self._log("Bot has reached maximum allowed passes. Asking it to complete analysis.", {
+                    "action": "max pass", "object": "#%d" % iteration
+                })
+                tool_handler = ToolHandler({"done": {"properties": prompt.report_properties}})
+                messages.append({"role": "user", "content": prompt.max_iteration_prompt})
 
             # contact llm, allow it to retry if a malformed response is returned
             tool_response = None
@@ -84,16 +95,20 @@ class BotClient:
                     messages.append(e.retry_message())
                     if err_retry_iter >= 0:
                         retry_no = prompt.max_error_retry - err_retry_iter
-                        self._log({"action": "retry", "object": "%d" % retry_no, "parameters": {
+                        self._log("Retry #%d after '%s' error." % (retry_no, e.__class__.__name__), {
+                            "action": "retry", "object": "%d" % retry_no, "parameters": {
                                 "error_class": e.__class__.__name__, "error": str(e), "retry_message": messages[-1].get("content", "(n/a)")
-                            }}, "Retry #%d after '%s' error." % (retry_no, e.__class__.__name__), level=logging.WARNING)
+                            }}, level=logging.WARNING)
 
-            if tool_response is not None:
+            # done response recieved, finish report
+            if isinstance(tool_response, ToolDoneResponse): 
+                self._log("Finished report via '%s' tool call." % (tool_response.call.function.name if tool_response.call else "(unknown)"), {
+                    "action": "finish", "object": "report", "parameters": tool_response.to_dict()
+                })
                 return tool_response.values
 
         # failed to complete task
-        # TODO enforce 'done' tool on last iteration
-        self._log({"action": "pass", "object": "maximum exceeded"}, level=logging.ERROR)
+        self._log("Maximum iterations reached.", {"action": "pass", "object": "maximum exceeded"}, level=logging.ERROR)
         raise BotMaxIterationsError("max iterations reached")
 
     def _handle_chat_completion(
@@ -101,7 +116,7 @@ class BotClient:
         model : str,
         tool_handler : ToolHandler,
         messages : list[ChatCompletionMessageParam]
-    ) -> Tuple[list[ChatCompletionMessageParam], Optional[ToolResponse]]:
+    ) -> Tuple[list[ChatCompletionMessageParam], Optional[ToolResponseBase]]:
         response = self.client.chat.completions.create(
             messages=messages,
             model=model,
@@ -117,13 +132,13 @@ class BotClient:
         if response_message.tool_calls:
             for call in response_message.tool_calls:
                 resp = tool_handler.call_openai(call)
-                if resp.prompt:
-                    sub_resp = self.run(resp.prompt)
-                    resp.prompt = None
-                    resp.bot_message = dict_get_type(sub_resp, "report", str)
-                    resp.values = sub_resp
-                    resp.success = dict_get_type(sub_resp, "success", bool, True)
-                if resp.done: return [], resp
-                out.append(resp.to_bot())
+                if isinstance(resp, ToolPromptResponse):
+                    self._log("Start '%s' bot sub-request." % call.function.name, {"action": "start", "object": "sub-request '%s'" % call.function.name})
+                    sub_req_values = self.run(resp.prompt)
+                    resp = ToolBotResponse(message=dict_get_type(sub_req_values, "report", str))
+                elif isinstance(resp, ToolDoneResponse):
+                    return [], resp
+                if isinstance(resp, ToolMessageResponse): out.append(resp.to_bot())
             return out, None
         return [], None
+

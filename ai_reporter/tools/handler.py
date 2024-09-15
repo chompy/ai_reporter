@@ -11,7 +11,7 @@ from .base import BaseTool
 from .done import DoneTool
 from .code import CodeTool
 from .code.tools import AVAILABLE_TOOLS as AVAILABLE_CODE_TOOLS
-from .response import ToolResponse
+from .response import ToolResponseBase
 
 AVAILABLE_TOOLS : list[type[BaseTool]] = [DoneTool, CodeTool] + AVAILABLE_CODE_TOOLS
 
@@ -45,7 +45,7 @@ class ToolHandler:
             ))
         return defs
 
-    def call(self, name : str, args : dict) -> ToolResponse:
+    def call(self, name : str, args : dict) -> ToolResponseBase:
         """ Call tool from its name and args dictionary. """
         self._log({"action": "call", "object": "tool '%s'" % name, "parameters": args})
         try:
@@ -65,7 +65,7 @@ class ToolHandler:
             raise e
         raise ToolNotDefinedError(name)
 
-    def call_openai(self, tool_call : ChatCompletionMessageToolCall) -> ToolResponse:
+    def call_openai(self, tool_call : ChatCompletionMessageToolCall) -> ToolResponseBase:
         """ Call tool from a OpenAI tool request. """
         function_args = json.loads(tool_call.function.arguments)
         out = self.call(tool_call.function.name, function_args)
