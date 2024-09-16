@@ -1,21 +1,17 @@
+import logging
 from typing import Iterable, Optional
+
+from ...error.bot import ToolPropertyInvalidError
 from ...utils import dict_get_type
 from ..base import BaseTool
 from ..response import ToolPromptResponse
-from ...input.prompt import Prompt
 from .fetcher import get_fetcher
-import logging
-from ...error.bot import ToolPropertyInvalidError
-from ...input.property import PropertyDefinition
-
 from .tools import AVAILABLE_TOOLS
 
 DEFAULT_SYSTEM_PROMPT = """
 Adopt the role of a quality assurance (QA) engineer.
 You will be asked to perform an analysis of a code base. You have access to tools that will allow you the examine the code base. Perform the task in as few steps as possible. When you have reached a conclusion use the `done` tool to finish.
 """
-
-AVAIALBLE_TOOLS = []
 
 class CodeTool(BaseTool):
 
@@ -43,7 +39,7 @@ class CodeTool(BaseTool):
     def definition(cls, code_bases : Iterable[str], **kwargs) -> dict:
         return {
             "name": cls.name(),
-            "description": "Ask a large language model to examine a code base and provide a summary of its findings.",
+            "description": "Ask a large language model to examine a code base and report on its findings.",
             "parameters": {
                 "type": "object",
                 "properties": {

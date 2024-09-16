@@ -2,6 +2,7 @@ from abc import abstractmethod
 import logging
 from typing import Optional
 from .response import ToolResponseBase
+from ..error.bot import ToolPropertyMissingError
 
 class BaseTool:
 
@@ -32,5 +33,6 @@ class BaseTool:
         defined_properties = self.__class__.definition(**self.args).get("parameters", {}).get("properties", {})
         for prop_name, _ in defined_properties.items():
             if prop_name in required_properties and prop_name not in properties:
-                raise AttributeError("'%s' is required" % prop_name)
-            # TODO type checking?        
+                raise ToolPropertyMissingError(self.name(), prop_name)
+            # TODO type checking?
+            # TODO verify enum value      

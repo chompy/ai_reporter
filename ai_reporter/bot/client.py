@@ -73,6 +73,10 @@ class BotClient:
         for iteration in range(1, prompt.max_iterations+1):
             self._log("Bot pass #%d." % iteration, {"action": "pass", "object": "#%d" % iteration})
 
+            # make callback if provided from prompt
+            if prompt.iteration_callback:
+                messages += prompt.iteration_callback(iteration, messages)
+
             # after max iteration reached make only the 'done' tool available, and tell bot to finish its report
             if iteration == prompt.max_iterations:
                 self._log("Bot has reached maximum allowed passes. Asking it to complete analysis.", {

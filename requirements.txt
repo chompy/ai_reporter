@@ -2,3 +2,5 @@ pyyaml
 requests
 openai
 python-gitlab
+selenium
+pillow
