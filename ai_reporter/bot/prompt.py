@@ -1,7 +1,6 @@
-from typing import Iterable, Callable, Optional
+from typing import Iterable
 from .image import Image
 from .property import PropertyDefinition
-from openai.types.chat import ChatCompletionMessageParam
 
 DEFAULT_SYSTEM_PROMPT = """
 Using the tools available to you, perform an analysis of the user's message. Use the `done` tool to signal the completion of your analysis.
@@ -10,8 +9,6 @@ Using the tools available to you, perform an analysis of the user's message. Use
 DEFAULT_MAX_ITERATION_PROMPT = """
 Please complete your analysis now with the `done` tool. Explain what blockers you encountered (if any). If there were no blockers than please provide a summary of your findings.
 """
-
-TypeCallBack = Optional[Callable[[int, list[ChatCompletionMessageParam]], list[ChatCompletionMessageParam]]]
 
 class Prompt:
 
@@ -27,8 +24,7 @@ class Prompt:
         model : str = "gpt-4o-mini",
         max_iterations : int = 5,
         max_error_retry : int = 3,
-        max_iteration_prompt : str = DEFAULT_MAX_ITERATION_PROMPT,
-        iteration_callback : TypeCallBack = None
+        max_iteration_prompt : str = DEFAULT_MAX_ITERATION_PROMPT
     ):
 
         """
@@ -41,7 +37,6 @@ class Prompt:
         :param max_iterations: The maximum number of loops to take before forcing the bot to finish.
         :param max_error_retry: The maximum number of retries before giving up after the bot returns an erroneous response.
         :param max_iteration_prompt: The prompt to send to the bot when the maximum number of loops has been reached and it is forced to finish.
-        :param iteration_callback: Optional callable that is called at the beginning of each bot iteration.
         """
         self.user_prompt = user_prompt
         self.report_properties = report_properties
@@ -52,7 +47,6 @@ class Prompt:
         self.max_iterations = max_iterations
         self.max_error_retry = max_error_retry
         self.tools = tools
-        self.iteration_callback = iteration_callback
 
     def to_dict(self) -> dict:
         return {

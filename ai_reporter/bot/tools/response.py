@@ -1,7 +1,5 @@
 from typing import Optional
 from openai.types.chat import ChatCompletionMessageToolCall, ChatCompletionToolMessageParam
-from ..input.prompt import Prompt
-from ..input.property import PropertyDefinition
 
 class ToolResponseBase:
 
@@ -19,7 +17,7 @@ class ToolResponseBase:
 
 class ToolMessageResponse(ToolResponseBase):
     
-    """ Tool response for replying to original tool call. """
+    """ Tool response for replying with requested information. """
 
     def __init__(self, message : str):
         """
@@ -55,24 +53,3 @@ class ToolDoneResponse(ToolResponseBase):
             "done": True,
             "values": self.values
         }
-
-class ToolPromptResponse(ToolResponseBase):
-
-    """ Tool response for prompting the bot with a sub-request. """
-
-    def __init__(self, **kwargs):
-        super().__init__()
-        self.prompt = Prompt(
-            report_properties=[PropertyDefinition("report", description="A report of your analysis.", required=True)],
-            **kwargs
-        )
-
-    def to_dict(self) -> dict:
-        return {
-            **super().to_dict(),
-            "prompt": self.prompt
-        }
-
-class ToolBotResponse(ToolMessageResponse):
-    """ Tool response for replying with the results of a sub-request from a ToolPromptResponse. """
-    pass

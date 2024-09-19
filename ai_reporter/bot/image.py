@@ -6,7 +6,7 @@ from typing import Self, Optional, IO
 
 class Image:
 
-    """ An image to be included with an AI prompt. """
+    """ An image to be included with a prompt. """
 
     def __init__(self):
         self.mime = "image/png"

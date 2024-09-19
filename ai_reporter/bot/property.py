@@ -1,8 +1,6 @@
 from typing import Optional, Self, Union
 from enum import StrEnum
 
-from pydantic.fields import PropertyT
-
 class PropertyType(StrEnum):
     STR = "string"
     INT = "integer"
@@ -14,7 +12,7 @@ class PropertyType(StrEnum):
 
 class PropertyDefinition:
 
-    """ Defines a property value and its constraints for the AI to include in the report. """
+    """ Defines a property value and its constraints. """
 
     def __init__(
         self,

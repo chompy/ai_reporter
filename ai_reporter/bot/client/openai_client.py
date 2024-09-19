@@ -1,3 +1,4 @@
+import json
 import logging
 from typing import Iterable, Optional, Tuple
 
@@ -5,36 +6,34 @@ import openai
 from openai.types.chat import (
     ChatCompletionContentPartImageParam,
     ChatCompletionMessageParam,
+    ChatCompletionMessageToolCall,
     ChatCompletionSystemMessageParam,
     ChatCompletionUserMessageParam,
+    ChatCompletionToolParam
 )
 from openai.types.chat.chat_completion_content_part_image_param import ImageURL
+from openai.types.shared_params.function_definition import FunctionDefinition
 
-from ..error.bot import BotMaxIterationsError, MalformedBotResponseError
-from ..input.image import Image
-from ..input.prompt import Prompt
+from ...error.bot import BotMaxIterationsError, MalformedBotResponseError
+from ..image import Image
+from ..prompt import Prompt
+from ..results import BotResults
 from ..tools.handler import ToolHandler
-from ..tools.response import (
-    ToolDoneResponse,
-    ToolMessageResponse,
-    ToolPromptResponse,
-    ToolResponseBase,
-    ToolBotResponse,
-)
-from ..utils import dict_get_type
+from ..tools.response import ToolDoneResponse, ToolMessageResponse, ToolResponseBase
+from .base_client import BaseClient
 
-class BotClient:
+class OpenAIClient(BaseClient):
 
-    def __init__(self, api_key : Optional[str] = None, base_url : Optional[str] = None, logger : Optional[logging.Logger] = None):
+    def __init__(self, api_key : Optional[str] = None, base_url : Optional[str] = None, **kwargs):
+        super().__init__(**kwargs)
         self.client = openai.OpenAI(
             api_key=api_key,
             base_url=base_url
         )
-        self.logger = logger
 
-    def _log(self, message : str, params : dict, level : int = logging.INFO):
-        params["_module"] = "bot"
-        if self.logger: self.logger.log(level, message, extra=params)
+    @staticmethod
+    def name():
+        return "openai"
 
     def _prepare_image_attachments(self, images : Iterable[Image]) -> ChatCompletionUserMessageParam:
         messages = []
@@ -52,13 +51,9 @@ class BotClient:
             )
         return ChatCompletionUserMessageParam(role="user", content=messages)
 
-    def run(self, prompt : Prompt) -> dict[str,object]:
-        """ Run the AI/LLM with given prompt data. """
+    def run(self, prompt : Prompt) -> BotResults:
 
-        tool_handler = ToolHandler({
-            **prompt.tools,
-            "done": {"properties": prompt.report_properties}
-        }, self.logger)
+        tool_handler = self._get_tool_handler(prompt)
 
         # prepare initial messages for ai
         messages : list[ChatCompletionMessageParam] = [
@@ -73,16 +68,12 @@ class BotClient:
         for iteration in range(1, prompt.max_iterations+1):
             self._log("Bot pass #%d." % iteration, {"action": "pass", "object": "#%d" % iteration})
 
-            # make callback if provided from prompt
-            if prompt.iteration_callback:
-                messages += prompt.iteration_callback(iteration, messages)
-
             # after max iteration reached make only the 'done' tool available, and tell bot to finish its report
             if iteration == prompt.max_iterations:
                 self._log("Bot has reached maximum allowed passes. Asking it to complete analysis.", {
                     "action": "max pass", "object": "#%d" % iteration
                 })
-                tool_handler = ToolHandler({"done": {"properties": prompt.report_properties}})
+                tool_handler = self._get_tool_handler(prompt, is_final_iteration=True)
                 messages.append({"role": "user", "content": prompt.max_iteration_prompt})
 
             # contact llm, allow it to retry if a malformed response is returned
@@ -96,7 +87,7 @@ class BotClient:
                 except MalformedBotResponseError as e:
                     err_retry_iter -= 1
                     if err_retry_iter <= 0: raise e
-                    messages.append(e.retry_message())
+                    messages.append(ChatCompletionUserMessageParam(content=e.retry_message(), role="user"))
                     if err_retry_iter >= 0:
                         retry_no = prompt.max_error_retry - err_retry_iter
                         self._log("Retry #%d after '%s' error." % (retry_no, e.__class__.__name__), {
@@ -109,7 +100,7 @@ class BotClient:
                 self._log("Finished report via '%s' tool call." % (tool_response.call.function.name if tool_response.call else "(unknown)"), {
                     "action": "finish", "object": "report", "parameters": tool_response.to_dict()
                 })
-                return tool_response.values
+                return BotResults(tool_response.values)
 
         # failed to complete task
         self._log("Maximum iterations reached.", {"action": "pass", "object": "maximum exceeded"}, level=logging.ERROR)
@@ -126,7 +117,7 @@ class BotClient:
             model=model,
             temperature=0.2,
             top_p=0.1,
-            tools=tool_handler.definitions(),
+            tools=self._tool_definitions(tool_handler),
             tool_choice="required"
         )
         if len(response.choices) == 0: raise Exception("unexpected response from chat completitions api")
@@ -135,14 +126,33 @@ class BotClient:
         out.append(response_message.to_dict())
         if response_message.tool_calls:
             for call in response_message.tool_calls:
-                resp = tool_handler.call_openai(call)
-                if isinstance(resp, ToolPromptResponse):
-                    self._log("Start '%s' bot sub-request." % call.function.name, {"action": "start", "object": "sub-request '%s'" % call.function.name})
-                    sub_req_values = self.run(resp.prompt)
-                    resp = ToolBotResponse(message=dict_get_type(sub_req_values, "report", str))
-                elif isinstance(resp, ToolDoneResponse):
+                resp = self._tool_call(tool_handler, call)
+                if isinstance(resp, ToolDoneResponse):
                     return [], resp
                 if isinstance(resp, ToolMessageResponse): out.append(resp.to_bot())
             return out, None
         return [], None
 
+    def _tool_call(self, tool_handler : ToolHandler, tool_call : ChatCompletionMessageToolCall) -> ToolResponseBase:
+        function_args = json.loads(tool_call.function.arguments)
+        out = tool_handler.call(tool_call.function.name, function_args)
+        out.call = tool_call
+        return out
+
+    def _tool_definitions(self, tool_handler : ToolHandler) -> list[ChatCompletionToolParam]:
+        out = []
+        for tool in tool_handler.tools:
+            tool_config = tool_handler.get_tool_config(tool)
+            out.append(ChatCompletionToolParam(
+                function=FunctionDefinition(
+                    name=tool.name(),
+                    description=tool.description(**tool_config),
+                    parameters={
+                        "type": "object",
+                        "properties": dict(map(lambda p: (p.name, p.to_dict()), tool.properties(**tool_config))),
+                        "required": list(map(lambda p: p.name, filter(lambda p: p.required, tool.properties(**tool_config))))
+                    }
+                ),
+                type="function"
+            ))
+        return out
