@@ -9,14 +9,15 @@ class MalformedBotResponseError(Exception):
 
 class ToolPropertyInvalidError(ValueError, MalformedBotResponseError):
     
-    def __init__(self, tool_name : str, property_name : str) -> None:
+    def __init__(self, tool_name : str, property_name : str, why : str = "") -> None:
         self.tool_name = tool_name
         self.property_name = property_name
+        self.why = why
         super().__init__("property '%s' is invalid for tool '%s'" % (self.property_name, self.tool_name))
 
     def retry_message(self):
-        return "Property '%s' was invalid in your call to the '%s' tool.  Please try again." % (
-                self.property_name, self.tool_name)
+        return "Property '%s' was invalid in your call to the '%s' tool. %sPlease try again." % (
+                self.property_name, ((self.why.capitalize() + ".") if self.why else ""), self.tool_name)
 
 class ToolPropertyMissingError(AttributeError, MalformedBotResponseError):
     

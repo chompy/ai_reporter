@@ -8,8 +8,9 @@ from openai.types.chat import (
     ChatCompletionMessageParam,
     ChatCompletionMessageToolCall,
     ChatCompletionSystemMessageParam,
+    ChatCompletionToolParam,
     ChatCompletionUserMessageParam,
-    ChatCompletionToolParam
+    ChatCompletionToolMessageParam
 )
 from openai.types.chat.chat_completion_content_part_image_param import ImageURL
 from openai.types.shared_params.function_definition import FunctionDefinition
@@ -97,7 +98,7 @@ class OpenAIClient(BaseClient):
 
             # done response recieved, finish report
             if isinstance(tool_response, ToolDoneResponse): 
-                self._log("Finished report via '%s' tool call." % (tool_response.call.function.name if tool_response.call else "(unknown)"), {
+                self._log("Finished report via '%s' tool call." % (tool_response.tool_name if tool_response.tool_name else "(unknown)"), {
                     "action": "finish", "object": "report", "parameters": tool_response.to_dict()
                 })
                 return BotResults(tool_response.values)
@@ -124,19 +125,28 @@ class OpenAIClient(BaseClient):
         out = []
         response_message = response.choices[0].message
         out.append(response_message.to_dict())
+        images = []
         if response_message.tool_calls:
             for call in response_message.tool_calls:
                 resp = self._tool_call(tool_handler, call)
                 if isinstance(resp, ToolDoneResponse):
                     return [], resp
-                if isinstance(resp, ToolMessageResponse): out.append(resp.to_bot())
+                if isinstance(resp, ToolMessageResponse):
+                    out.append(ChatCompletionToolMessageParam(
+                        role="tool",
+                        tool_call_id=resp.tool_call_id if resp.tool_call_id  else "-",
+                        content=resp.message
+                    ))
+                    images += resp.images
+            if images: out += self._prepare_image_attachments(images)
             return out, None
         return [], None
 
     def _tool_call(self, tool_handler : ToolHandler, tool_call : ChatCompletionMessageToolCall) -> ToolResponseBase:
         function_args = json.loads(tool_call.function.arguments)
         out = tool_handler.call(tool_call.function.name, function_args)
-        out.call = tool_call
+        out.tool_name = tool_call.function.name
+        out.tool_call_id = tool_call.id
         return out
 
     def _tool_definitions(self, tool_handler : ToolHandler) -> list[ChatCompletionToolParam]:

@@ -1,17 +1,18 @@
-from typing import Optional
-from openai.types.chat import ChatCompletionMessageToolCall, ChatCompletionToolMessageParam
+from typing import Optional, Iterable
+from ..image import Image
 
 class ToolResponseBase:
 
     """ The response of a tool call. """
 
     def __init__(self):
-        self.call : Optional[ChatCompletionMessageToolCall] = None
+        self.tool_name : Optional[str] = None
+        self.tool_call_id : Optional[str] = None
 
     def to_dict(self) -> dict:
         return {
-            "name": self.call.function.name if self.call else "(unknown)",
-            "request_args": self.call.function.arguments if self.call else {},
+            "name": self.tool_name,
+            "tool_call_id": self.tool_call_id,
             "done": False
         }
 
@@ -19,25 +20,19 @@ class ToolMessageResponse(ToolResponseBase):
     
     """ Tool response for replying with requested information. """
 
-    def __init__(self, message : str):
+    def __init__(self, message : str, images : Iterable[Image] = []):
         """
         :param message: Message to reply to the bot with.
         """
         super().__init__()
         self.message = message
+        self.images = images
 
     def to_dict(self) -> dict:
         return {
             **super().to_dict(),
             "message": self.message
         }
-
-    def to_bot(self) -> ChatCompletionToolMessageParam:
-        return ChatCompletionToolMessageParam(
-            role="tool",
-            tool_call_id=self.call.id if self.call else "-",
-            content=self.message
-        )
 
 class ToolDoneResponse(ToolResponseBase):
 

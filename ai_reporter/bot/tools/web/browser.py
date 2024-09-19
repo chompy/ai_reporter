@@ -1,22 +1,24 @@
-import io
 import base64
+from fnmatch import fnmatch
+import io
 import math
 import time
 from typing import Iterable, Optional
-from fnmatch import fnmatch
-from urllib.parse import urlparse, quote_plus
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.remote.webdriver import WebDriver
-from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.support.ui import Select
-from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import StaleElementReferenceException
+from urllib.parse import quote_plus, urlparse
+
 from PIL import Image
 from PIL import ImageFont
 from PIL import ImageDraw
-from ...error.web import ElementNotFoundException, InvalidElementException
+from selenium import webdriver
+from selenium.common.exceptions import StaleElementReferenceException
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.remote.webdriver import WebDriver
+from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.support.ui import Select
+
+from ....error.web import ElementNotFoundException, InvalidElementException
 from .secret import Secret, SecretType
 
 WIDTH = 1280
@@ -267,10 +269,10 @@ class Browser:
             self.driver.execute_script("return window.scrollY")
         )
 
-    def screenshot(self, add_element_labels : bool = True) -> str:
+    def screenshot(self, add_element_labels : bool = True) -> bytes:
         """
         Take a screenshot of current viewport with every interactable
-        element labeled in base64 data uri format.
+        element labeled.
         """
 
         screenshot = self.driver.get_screenshot_as_png()
@@ -306,8 +308,7 @@ class Browser:
             screenshotWrite.seek(0)
             screenshot = screenshotWrite.read()
 
-        # convert to data uri        
-        return "data:image/png;base64," + base64.b64encode(screenshot).decode()
+        return screenshot
 
     def close(self):
         """ Close the browser. """

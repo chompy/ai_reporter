@@ -1,15 +1,16 @@
 import logging
 from typing import Optional
 
-from ...error.bot import ToolNotDefinedError, ToolPropertyMissingError
+from ...error.bot import ToolNotDefinedError, ToolPropertyInvalidError, ToolPropertyMissingError
 from .base import BaseTool
 from .done import DoneTool
 from .git import TOOLS as GIT_TOOLS
+from .web import TOOLS as WEB_TOOLS
 from .response import ToolResponseBase
 
 TOOLS = {
     "git": GIT_TOOLS,
-    "web": []
+    "web": WEB_TOOLS
 }
 
 class ToolHandler:
@@ -56,6 +57,8 @@ class ToolHandler:
                     for prop in tool_props:
                         if prop.required and prop.name not in args:
                             raise ToolPropertyMissingError(this_tool_name, prop.name)
+                        if prop.choices and args.get(prop.name) not in prop.choices:
+                            raise ToolPropertyInvalidError(this_tool_name, prop.name)
                     # call tool
                     tool_obj = tool_class(state=self.state, logger=self.logger, **tool_config)
                     resp = tool_obj.execute(**args)
@@ -63,7 +66,7 @@ class ToolHandler:
                         "response": resp.to_dict()}})
                     return resp
         except TypeError as e:
-            
+            # TODO invalid tool property error?
             raise e
         except Exception as e:
             self._log({"action": "error", "object": "tool '%s'" % name, "parameters": {
