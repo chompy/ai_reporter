@@ -10,7 +10,8 @@ from .response import ToolResponseBase
 
 TOOLS = {
     "git": GIT_TOOLS,
-    "web": WEB_TOOLS
+    "web": WEB_TOOLS,
+    "done": [DoneTool]
 }
 
 class ToolHandler:

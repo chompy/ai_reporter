@@ -22,7 +22,7 @@ class Prompt:
         images : list[Image] = [],
         tools : dict[str,dict] = {},
         model : str = "gpt-4o-mini",
-        max_iterations : int = 5,
+        max_iterations : int = 20,
         max_error_retry : int = 3,
         max_iteration_prompt : str = DEFAULT_MAX_ITERATION_PROMPT
     ):

@@ -138,7 +138,7 @@ class OpenAIClient(BaseClient):
                         content=resp.message
                     ))
                     images += resp.images
-            if images: out += self._prepare_image_attachments(images)
+            if images: out.append(self._prepare_image_attachments(images))
             return out, None
         return [], None
 

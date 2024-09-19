@@ -11,7 +11,7 @@ class DoneTool(BaseTool):
         return "done"
 
     @staticmethod
-    def description():
+    def description(**kwargs):
         return "Finish your analysis."
 
     @staticmethod
