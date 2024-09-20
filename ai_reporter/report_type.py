@@ -5,7 +5,7 @@ class ReportType:
 
     """ Defines a type of report. """
 
-    def __init__(self, name : str, prompt : Prompt, next_report_type : Optional[Callable[[dict[str,dict]], Self]] = None):
+    def __init__(self, name : str, prompt : Prompt, next_report_type : Optional[Callable[[dict[str,dict]], Optional[Self]]] = None):
         """
         :param name: Name of report type.
         :param prompt: The prompt to use when running this report.
