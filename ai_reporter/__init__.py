@@ -9,6 +9,7 @@ BotResults = _bot.BotResults
 Prompt = _bot.Prompt
 PropertyDefinition = _bot.PropertyDefinition
 PropertyType = _bot.PropertyType
+Image = _bot.Image
 
 def run_bot(prompt : Prompt, config : dict = {}, logger : Optional[logging.Logger] = None) -> BotResults:
     """
