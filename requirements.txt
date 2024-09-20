@@ -1,6 +1,6 @@
 pyyaml
 requests
 openai
-python-gitlab
+GitPython
 selenium
 pillow
