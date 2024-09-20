@@ -1,7 +1,7 @@
 from typing import Self
 from enum import StrEnum
 
-from ....utils import dict_get_type
+from ....utils import check_config_type
 
 class SecretType(StrEnum):
     HTTP_BASIC = "http"
@@ -10,17 +10,11 @@ class SecretType(StrEnum):
 class Secret:
 
     def __init__(self, key : str, value : str, type : SecretType = SecretType.FORM, url_pattern : str = "*"):
+        check_config_type(key, str, "tools.web.secrets.[].key")
+        check_config_type(value, str, "tools.web.secrets.[].value")
+        check_config_type(type, str, "tools.web.secrets.[].type")
+        check_config_type(url_pattern, str, "tools.web.secrets.[].url_pattern")
         self.key = key
         self.value = value
         self.type = type
         self.url_pattern = url_pattern
-
-    @classmethod
-    def from_dict(cls, data : dict) -> Self:
-        return cls(
-            key=dict_get_type(data, "key", str),
-            value=dict_get_type(data, "value", str),
-            type=SecretType(dict_get_type(data, "type", str)),
-            url_pattern=dict_get_type(data, "url_pattern", str)
-        )
-

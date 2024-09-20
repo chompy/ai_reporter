@@ -8,14 +8,15 @@ from openai.types.chat import (
     ChatCompletionMessageParam,
     ChatCompletionMessageToolCall,
     ChatCompletionSystemMessageParam,
+    ChatCompletionToolMessageParam,
     ChatCompletionToolParam,
     ChatCompletionUserMessageParam,
-    ChatCompletionToolMessageParam
 )
 from openai.types.chat.chat_completion_content_part_image_param import ImageURL
 from openai.types.shared_params.function_definition import FunctionDefinition
 
 from ...error.bot import BotMaxIterationsError, MalformedBotResponseError
+from ...utils import check_config_type
 from ..image import Image
 from ..prompt import Prompt
 from ..results import BotResults
@@ -27,6 +28,8 @@ class OpenAIClient(BaseClient):
 
     def __init__(self, api_key : Optional[str] = None, base_url : Optional[str] = None, **kwargs):
         super().__init__(**kwargs)
+        if api_key: check_config_type(api_key, str, "config:api_key")
+        if base_url: check_config_type(base_url, str, "config:base_url")
         self.client = openai.OpenAI(
             api_key=api_key,
             base_url=base_url

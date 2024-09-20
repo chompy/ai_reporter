@@ -25,31 +25,30 @@ class BaseWebTool(BaseTool):
 
     def __init__(
         self,
-        browser_name : str = "firefox",
-        remote_url : Optional[str] = None,
+        selenium_browser : str = "firefox",
+        selenium_url : Optional[str] = None,
         secrets : list[dict] = [],
         screenshot_log_path : Optional[str] = None,
         **kwargs
     ):
         super().__init__(**kwargs)
         # check types
-        if browser_name: self._arg_type_check("browser_name", browser_name, str)
-        if remote_url: self._arg_type_check("remote_url", remote_url, str)
-        self._arg_type_check("secrets", secrets, list)
-        if screenshot_log_path: self._arg_type_check("screenshot_log_path", screenshot_log_path, str)
-
-        self.browser = self._get_browser(browser_name, remote_url, secrets)
+        if selenium_browser: self._check_config_type(selenium_browser, str, "tools.web.selenium_browser")
+        if selenium_url: self._check_config_type(selenium_url, str, "tools.web.selenium_url")
+        self._check_config_type(secrets, list, "tools.web.secrets")
+        if screenshot_log_path: self._check_config_type(screenshot_log_path, str, "tools.web.screenshot_log_path")
+        self.browser = self._get_browser(selenium_browser, selenium_url, secrets)
         self.screenshot_log_path = screenshot_log_path
 
-    def _get_browser(self, browser_name : str, remote_url : Optional[str] = None, secrets : list[dict] = []) -> Browser:
+    def _get_browser(self, selenium_browser : str, selenium_url : Optional[str] = None, secrets : list[dict] = []) -> Browser:
         # get previously initialized browser
         if "browser" in self.state and isinstance(self.state["browser"], Browser): return self.state["browser"]
         # init new browser
         remote_driver = None
-        if remote_url:
-            opts = FirefoxOptions() if browser_name == "firefox" else ChromeOptions()
-            remote_driver = Remote(remote_url, options=opts)
-        self.state["browser"] = Browser(driver=remote_driver, secrets=map(lambda s: Secret.from_dict(s), secrets))
+        if selenium_url:
+            opts = FirefoxOptions() if selenium_browser == "firefox" else ChromeOptions()
+            remote_driver = Remote(selenium_url, options=opts)
+        self.state["browser"] = Browser(driver=remote_driver, secrets=map(lambda s: Secret(**s), secrets))
         return self.state["browser"]
 
     def _screenshot(self) -> Image:
