@@ -1,4 +1,5 @@
-from typing import Optional, TypeVar, Any
+from typing import Any, Optional, TypeVar
+
 from .error.config import ConfigParameterTypeError
 
 T = TypeVar("T")

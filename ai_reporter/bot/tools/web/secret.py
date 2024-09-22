@@ -1,4 +1,3 @@
-from typing import Self
 from enum import StrEnum
 
 from ....utils import check_config_type
@@ -8,6 +7,8 @@ class SecretType(StrEnum):
     FORM = "form"
 
 class Secret:
+
+    """ A secret value for use with the web browser either HTTP basic auth credientials or a username/password for a login form. """
 
     def __init__(self, key : str, value : str, type : SecretType = SecretType.FORM, url_pattern : str = "*"):
         check_config_type(key, str, "tools.web.secrets.[].key")

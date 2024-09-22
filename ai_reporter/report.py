@@ -1,10 +1,13 @@
 from typing import Iterable
-from .report_type import ReportType
+
 from .bot.results import BotResults
+from .report_type import ReportType
 
 class Report:
 
-    """ The report results. """
+    """
+    The results of a report produced by the bot.
+    """
 
     def __init__(self, report_type : ReportType, bot_results : BotResults):
         self.type = report_type

@@ -1,4 +1,4 @@
-from typing import Optional, Self, Union
+from typing import Optional, Self, Union, Any
 from enum import StrEnum
 
 class PropertyType(StrEnum):
@@ -34,6 +34,7 @@ class PropertyDefinition:
 
     @classmethod
     def from_dict(cls,  data : dict[str,dict]) -> list[Self]:
+        # TODO allow import of JSON schema (https://json-schema.org/)
         out = []
         for k, v in data.items():
             out.append(cls(name=k, **v))
@@ -56,3 +57,49 @@ class PropertyDefinition:
             case PropertyType.ENUM:
                 out["enum"] = self.choices
         return out
+
+    def check_type(self, value : Any) -> bool:
+        """
+        Check if given value matches property type.
+
+        :param value: Value to check.
+        """
+        match self.type:
+            case PropertyType.STR:
+                return isinstance(value, str)
+            case PropertyType.INT:
+                return isinstance(value, int)
+            case PropertyType.FLOAT:
+                return isinstance(value, float)
+            case PropertyType.BOOL:
+                return isinstance(value, bool)
+            case PropertyType.DICT:
+                return isinstance(value, dict)
+            case PropertyType.LIST | PropertyType.ENUM:
+                return isinstance(value, list)
+
+    def check_required(self, value : Any) -> bool:
+        """
+        Check if required value is not none.
+
+        :param value: Value to check.
+        """
+        return value is not None or not self.required
+
+    def check_range(self, value : Any) -> bool:
+        """
+        Check if given value is in range.
+
+        :param value: Value to check.
+        """
+        if self.min and value < self.min: return False
+        if self.max and value > self.max: return False
+        return True
+
+    def check_choices(self, value : Any) -> bool:
+        """
+        Check if given value is a valid choice.
+
+        :param value: Value to check.
+        """
+        return not self.choices or value in self.choices

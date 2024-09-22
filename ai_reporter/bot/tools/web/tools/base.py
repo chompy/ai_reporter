@@ -48,7 +48,7 @@ class BaseWebTool(BaseTool):
         if selenium_url:
             opts = FirefoxOptions() if selenium_browser == "firefox" else ChromeOptions()
             remote_driver = Remote(selenium_url, options=opts)
-        self.state["browser"] = Browser(driver=remote_driver, secrets=map(lambda s: Secret(**s), secrets))
+        self.state["browser"] = Browser(driver=remote_driver, secrets=map(lambda s: Secret(**s), secrets), logger=self.logger)
         return self.state["browser"]
 
     def _screenshot(self) -> Image:
@@ -63,6 +63,7 @@ class BaseWebTool(BaseTool):
         path = os.path.join(self.screenshot_log_path, "web_%d.png" % (
             datetime.now().timestamp(), 
         ))
+        self._log("Save screenshot at '%s'." % path, {"action": "save screenshot", "object": self, "path": screenshot})
         with open(path, "wb") as f: f.write(screenshot)
         return path
 

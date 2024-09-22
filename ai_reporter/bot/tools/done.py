@@ -7,6 +7,8 @@ from ...utils import check_config_type
 
 class DoneTool(BaseTool):
 
+    """ Tool that the bot should call when it has completed its analysis. """
+
     @staticmethod
     def name() -> str:
         return "done"

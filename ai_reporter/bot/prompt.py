@@ -1,19 +1,22 @@
 from typing import Iterable
+
+from ..utils import check_config_type
 from .image import Image
 from .property import PropertyDefinition
-from ..utils import check_config_type
 
 DEFAULT_SYSTEM_PROMPT = """
 Using the tools available to you, perform an analysis of the user's message. Use the `done` tool to signal the completion of your analysis.
 """.strip()
 
 DEFAULT_MAX_ITERATION_PROMPT = """
-Please complete your analysis now with the `done` tool. Explain what blockers you encountered (if any). If there were no blockers than please provide a summary of your findings.
+Please complete your analysis to the best of your ability with the `done` tool.
 """
 
 class Prompt:
 
-    """ Contains data needed to prompt the AI model. """
+    """
+    The prompt for the AI model as well as the desired properties to include in the report
+    """
 
     def __init__(
         self, 

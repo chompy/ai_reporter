@@ -23,8 +23,13 @@ from ..results import BotResults
 from ..tools.handler import ToolHandler
 from ..tools.response import ToolDoneResponse, ToolMessageResponse, ToolResponseBase
 from .base_client import BaseClient
+from ..token_count import TokenCount
 
 class OpenAIClient(BaseClient):
+
+    """
+    Bot client for OpenAI (gpt-4) and other other OpenAI compatible APIs that support function calling.
+    """
 
     def __init__(self, api_key : Optional[str] = None, base_url : Optional[str] = None, **kwargs):
         super().__init__(**kwargs)
@@ -58,6 +63,7 @@ class OpenAIClient(BaseClient):
     def run(self, prompt : Prompt) -> BotResults:
 
         tool_handler = self._get_tool_handler(prompt)
+        token_counts = TokenCount()
 
         # prepare initial messages for ai
         messages : list[ChatCompletionMessageParam] = [
@@ -66,17 +72,15 @@ class OpenAIClient(BaseClient):
         ]
         if prompt.images: messages.append(self._prepare_image_attachments(prompt.images))
 
-        self._log("Start bot.", {"action": "start", "object": "bot", "parameters": prompt.to_dict()})
+        self._log_start(prompt)
 
         # make iterations until bot/llm completes task or max iterations are reached
         for iteration in range(1, prompt.max_iterations+1):
-            self._log("Bot pass #%d." % iteration, {"action": "pass", "object": "#%d" % iteration})
+            self._log_iteration(iteration)
 
             # after max iteration reached make only the 'done' tool available, and tell bot to finish its report
             if iteration == prompt.max_iterations:
-                self._log("Bot has reached maximum allowed passes. Asking it to complete analysis.", {
-                    "action": "max pass", "object": "#%d" % iteration
-                })
+                self._log_max_iterations(iteration)
                 tool_handler = self._get_tool_handler(prompt, is_final_iteration=True)
                 messages.append({"role": "user", "content": prompt.max_iteration_prompt})
 
@@ -85,7 +89,7 @@ class OpenAIClient(BaseClient):
             err_retry_iter = prompt.max_error_retry
             while err_retry_iter >= 0:
                 try:
-                    chat_resp_messages, tool_response = self._handle_chat_completion(prompt.model, tool_handler, messages)
+                    chat_resp_messages, tool_response = self._handle_chat_completion(prompt.model, tool_handler, messages, token_counts)
                     messages += chat_resp_messages
                     err_retry_iter = -1
                 except MalformedBotResponseError as e:
@@ -94,27 +98,22 @@ class OpenAIClient(BaseClient):
                     messages.append(ChatCompletionUserMessageParam(content=e.retry_message(), role="user"))
                     if err_retry_iter >= 0:
                         retry_no = prompt.max_error_retry - err_retry_iter
-                        self._log("Retry #%d after '%s' error." % (retry_no, e.__class__.__name__), {
-                            "action": "retry", "object": "%d" % retry_no, "parameters": {
-                                "error_class": e.__class__.__name__, "error": str(e), "retry_message": messages[-1].get("content", "(n/a)")
-                            }}, level=logging.WARNING)
+                        self._log_error_retry(e, retry_no)
 
             # done response recieved, finish report
-            if isinstance(tool_response, ToolDoneResponse): 
-                self._log("Finished report via '%s' tool call." % (tool_response.tool_name if tool_response.tool_name else "(unknown)"), {
-                    "action": "finish", "object": "report", "parameters": tool_response.to_dict()
-                })
-                return BotResults(tool_response.values)
+            if isinstance(tool_response, ToolDoneResponse):
+                self._log_done(tool_response)
+                return BotResults(tool_response.values, token_counts)
 
-        # failed to complete task
-        self._log("Maximum iterations reached.", {"action": "pass", "object": "maximum exceeded"}, level=logging.ERROR)
+        # failed to complete task, this should be unreachable code, the bot should be forced to call the `done` tool
         raise BotMaxIterationsError("max iterations reached")
 
     def _handle_chat_completion(
         self, 
         model : str,
         tool_handler : ToolHandler,
-        messages : list[ChatCompletionMessageParam]
+        messages : list[ChatCompletionMessageParam],
+        token_counts : TokenCount
     ) -> Tuple[list[ChatCompletionMessageParam], Optional[ToolResponseBase]]:
         response = self.client.chat.completions.create(
             messages=messages,
@@ -124,7 +123,9 @@ class OpenAIClient(BaseClient):
             tools=self._tool_definitions(tool_handler),
             tool_choice="required"
         )
-        if len(response.choices) == 0: raise Exception("unexpected response from chat completitions api")
+        token_counts.input += response.usage.prompt_tokens if response.usage else 0
+        token_counts.output += response.usage.completion_tokens if response.usage else 0
+        if len(response.choices) == 0: raise Exception("unexpected empty response from chat completitions api")
         out = []
         response_message = response.choices[0].message
         out.append(response_message.to_dict())

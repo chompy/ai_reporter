@@ -1,12 +1,17 @@
 import logging
 from typing import Optional
 
-from ...error.bot import ToolNotDefinedError, ToolPropertyInvalidError, ToolPropertyMissingError
+from ...error.bot import (
+    MalformedBotResponseError,
+    ToolNotDefinedError,
+    ToolPropertyInvalidError,
+    ToolPropertyMissingError,
+)
 from .base import BaseTool
 from .done import DoneTool
 from .git import TOOLS as GIT_TOOLS
-from .web import TOOLS as WEB_TOOLS
 from .response import ToolResponseBase
+from .web import TOOLS as WEB_TOOLS
 
 TOOLS = {
     "git": GIT_TOOLS,
@@ -15,6 +20,10 @@ TOOLS = {
 }
 
 class ToolHandler:
+
+    """
+    Handles tool calling based on requests from the bot.
+    """
 
     def __init__(
         self,
@@ -25,12 +34,9 @@ class ToolHandler:
         self.logger = logger
         self.state : dict[str,object] = {}
 
-    def _log(self, params : dict, message : str = "", level : int = logging.INFO):
-        params["_module"] = "tool"
-        if self.logger: self.logger.log(level, message, extra=params)
-
     @property
     def tools(self) -> list[type[BaseTool]]:
+        """ List of tools available to the bot. """
         out = []
         for name in self.tools_config.keys():
             for collection_name, classes in TOOLS.items():
@@ -38,6 +44,11 @@ class ToolHandler:
         return out + [DoneTool]
 
     def get_tool_config(self, tool : type[BaseTool]) -> dict:
+        """
+        The configuration for the given tool.
+
+        :param tool: The tool to get configuration for.
+        """
         for collection_name, classes in TOOLS.items():
             for _class in classes:
                 if tool is _class:
@@ -45,8 +56,13 @@ class ToolHandler:
         return {}
 
     def call(self, name : str, args : dict) -> ToolResponseBase:
-        """ Call tool from its name and args dictionary. """
-        self._log({"action": "call", "object": "tool '%s'" % name, "parameters": args})
+        """
+        Execute the given tool with the given arguments.
+
+        :param name: Name of tool to execute.
+        :param args: The arguments to pass.
+        """
+        self._log("Call tool '%s'." % name, {"action": "call", "object": "tool '%s'" % name, "args": args})
         try:
             for tool_class in self.tools:
                 this_tool_name = tool_class.name()
@@ -56,22 +72,31 @@ class ToolHandler:
                     tool_props = tool_class.properties(**tool_config)
                     # check for required properties
                     for prop in tool_props:
-                        if prop.required and prop.name not in args:
+                        if not prop.check_type(args.get(prop.name)):
+                            raise ToolPropertyInvalidError(this_tool_name, prop.name, "Unexpected value type.")
+                        if not prop.check_required(args.get(prop.name)):
                             raise ToolPropertyMissingError(this_tool_name, prop.name)
-                        if prop.choices and args.get(prop.name) not in prop.choices:
-                            raise ToolPropertyInvalidError(this_tool_name, prop.name)
+                        if not prop.check_choices(args.get(prop.name)):
+                            raise ToolPropertyInvalidError(this_tool_name, prop.name, "Value is not one of the provided options.")
+                        if not prop.check_range(args.get(prop.name)):
+                            raise ToolPropertyInvalidError(this_tool_name, prop.name, "Value is out of range.")
                     # call tool
                     tool_obj = tool_class(state=self.state, logger=self.logger, **tool_config)
                     resp = tool_obj.execute(**args)
-                    self._log({"action": "response", "object": "tool '%s'" % name, "parameters": {
-                        "response": resp.to_dict()}})
+                    self._log("Response from %s." % tool_obj, {"action": "response", "object": "tool '%s'" % name, "response": resp.to_dict()})
                     return resp
         except TypeError as e:
-            # TODO invalid tool property error?
-            raise e
+            self._log_error(name, e)
+            raise MalformedBotResponseError()
         except Exception as e:
-            self._log({"action": "error", "object": "tool '%s'" % name, "parameters": {
-                "error_class": e.__class__.__name__, "error": str(e)
-            }}, level=logging.ERROR)
+            self._log_error(name, e)
             raise e
         raise ToolNotDefinedError(name)
+
+    def _log(self, message : str, params : dict = {}, level : int = logging.INFO):
+        params["_module"] = "tool"
+        if self.logger: self.logger.log(level, message, extra=params)
+
+    def _log_error(self, tool_name : str, e : Exception):
+        self._log("Error when calling tool '%s'." % tool_name, {"action": "error", "object": "tool '%s'" % tool_name, "error_class": e.__class__.__name__,
+        "error": str(e)}, level=logging.ERROR)

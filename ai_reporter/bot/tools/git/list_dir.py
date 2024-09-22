@@ -31,7 +31,8 @@ class GitListDirTool(BaseGitTool):
             return ToolMessageResponse(
                 "\n".join(list(set(dir_list))) if dir_list else "(empty directory)"
             )
-        except BadName:
+        except BadName as e:
+            self._log_error("Error occured trying to list directory.", e, {"repository": repository, "path": path, "commit": commit})
             raise ToolPropertyInvalidError(self.name(), "commit")
 
     def _search_tree(self, path : str, tree : Tree) -> list[str]:

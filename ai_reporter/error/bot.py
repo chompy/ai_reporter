@@ -1,14 +1,15 @@
 class MalformedBotResponseError(Exception):
-    """
-    Raised when LLM produces a malformed response. When this is
-    raised we should ask the LLM to retry.
-    """
+    """ Bot produces a malformed response. """
     
     def retry_message(self) -> str:
+        """ Retry message for the bot. """
         return "I'm sorry, I couldn't understand your response, or something was missing. Please try again."
+
 
 class ToolPropertyInvalidError(ValueError, MalformedBotResponseError):
     
+    """ Bot returned an invalid property value. """
+
     def __init__(self, tool_name : str, property_name : str, why : str = "") -> None:
         self.tool_name = tool_name
         self.property_name = property_name
@@ -21,6 +22,8 @@ class ToolPropertyInvalidError(ValueError, MalformedBotResponseError):
 
 class ToolPropertyMissingError(AttributeError, MalformedBotResponseError):
     
+    """ Bot didn't provide a required property. """
+
     def __init__(self, tool_name : str, property_name : str) -> None:
         self.tool_name = tool_name
         self.property_name = property_name
@@ -31,6 +34,9 @@ class ToolPropertyMissingError(AttributeError, MalformedBotResponseError):
                 self.property_name, self.tool_name)
 
 class ToolNotDefinedError(MalformedBotResponseError):
+
+    """ Bot tried to call a tool that doesn't exist. """
+
     def __init__(self, tool_name : str) -> None:
         self.tool_name = tool_name
         super().__init__("tool '%s' is not defined" % self.tool_name)

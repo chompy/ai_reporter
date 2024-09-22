@@ -1,6 +1,6 @@
-import base64
 from fnmatch import fnmatch
 import io
+import logging
 import math
 import time
 from typing import Iterable, Optional
@@ -27,7 +27,12 @@ ACTION_WAIT_TIME=1
 
 class Browser:
 
-    def __init__(self, driver : Optional[WebDriver] = None, secrets : Optional[Iterable[Secret]] = None):
+    def __init__(
+        self, 
+        driver : Optional[WebDriver] = None,
+        secrets : Optional[Iterable[Secret]] = None, 
+        logger : Optional[logging.Logger] = None
+    ):
         self.driver = driver if driver else webdriver.Firefox() # default firefox
         self.driver.set_window_size(WIDTH, HEIGHT)
         self.driver.implicitly_wait(5)
@@ -35,38 +40,19 @@ class Browser:
         self.window_list = []
         self.last_page_load_time = 0
         self.secrets = list(secrets if secrets else [])
+        self.logger = logger
         self._last_input_element = None
 
     def __del__(self):
         if self.driver: self.close()
+
+    def __str__(self):
+        return "browser '%s'" % self.driver.name
     
-    def _define_element_labels(self):
-        self.element_labels = {}
-        label_elements = self.driver.find_elements(By.CSS_SELECTOR, "a[href],input,textarea,select,button")
-        counter = 0
-        for element in label_elements:
-            if not element.is_displayed() or not element.is_enabled(): continue
-                        
-            s1 = chr(65 + int(math.floor(counter / 9.0)) )
-            s2 = (counter % 9) + 1
-            counter += 1
-            self.element_labels["%s%d" % (s1, s2)] = element
-
-    def _get_element(self, label : str) -> WebElement:
-        element = self.element_labels.get(label)
-        if not element: raise ElementNotFoundException("Unable to find element labeled '%s'." % label)
-        return element
-
-    def _wait(self):
-        time.sleep(ACTION_WAIT_TIME)
-
-    def _wait_for_load(self):
-        while self.driver.execute_script("return document.readyState") != "complete":
-            time.sleep(1)
-            
     def get_element_info(self, label : str) -> dict:
         """
         Get information about an element.
+
         :param label: Element label.
         """
 
@@ -139,8 +125,12 @@ class Browser:
     def switch_window(self, handle : str):
         """
         Switch active window/tab.
+
         :param handle: Handle of the window/tab to switch to.
         """
+        self._log("Switch active window.", {"action": "switch window", 
+            "object": self, "handle": handle, "previous_handle": self.driver.current_window_handle})
+        self.driver.current_window_handle
         self.driver.switch_to.window(handle)
         self._wait()
         self._define_element_labels()
@@ -148,8 +138,12 @@ class Browser:
     def goto(self, url : str):
         """
         Open given URL.
+
         :param url: URL to open.
         """
+        self._log("Goto '%s'." % url, {"action": "goto url", 
+            "object": self, "url": url, "previous_url": self.driver.current_url})
+
         start = time.time()
         self.window_list = []
 
@@ -167,8 +161,11 @@ class Browser:
     def click(self, label : str):
         """
         Click on element with given label.
+
         :param label: Element label.
         """
+        self._log("Click element '%s'." % label, {"action": "click", "object": self, "label": label})
+
         start = time.time()
         current_url = self.driver.current_url
         self.window_list = []
@@ -188,6 +185,8 @@ class Browser:
 
     def back(self):
         """Go back to the previous page."""
+        self._log("Go back to previous page.", {"action": "back", "object": self})
+
         self.driver.execute_script("window.history.go(-1)")
         self._wait_for_load()
         self._define_element_labels()
@@ -195,8 +194,11 @@ class Browser:
     def hover(self, label : str):
         """
         Hover over element with given label.
+
         :param label: Element label.
         """
+        self._log("Hover over element '%s'." % label, {"action": "hover", "object": self, "label": label})
+
         ac = ActionChains(self.driver)
         ac.move_to_element(self._get_element(label))
         ac.perform()     
@@ -204,9 +206,12 @@ class Browser:
     def input(self, label : str, text : str):
         """
         Input given text on element with given label.
+
         :param label: Element label.
         :param text: Text to add to input element.
         """
+        self._log("Input text in to element '%s'." % label, {"action": "input", "object": self, "label": label, "text": text})
+
         element = self._get_element(label)
         ActionChains(self.driver).click(element).key_down(Keys.LEFT_CONTROL).send_keys("a").key_up(Keys.LEFT_CONTROL).key_down(Keys.DELETE).key_up(Keys.DELETE).perform()
         element.send_keys(text)
@@ -217,6 +222,7 @@ class Browser:
         Submit the form for the last input element interacted with.
         """
         if self._last_input_element:
+            self._log("Submit active form.", {"action": "submit", "object": self})
             start = time.time()
             self._last_input_element.submit()
             self._wait_for_load()
@@ -230,9 +236,12 @@ class Browser:
     def select(self, label : str, option : str):
         """
         Change selection of SELECT element.
+
         :param label: Element label.
         :param option: The option to select.
         """
+        self._log("Change selection for element '%s'." % label, {"action": "submit", "object": self, "label": label, "option": option})
+
         element = self._get_element(label)
         if element.tag_name != "select": raise InvalidElementException("Element '%s' is not a SELECT element." % label)
         select = Select(element)
@@ -241,9 +250,12 @@ class Browser:
     def scroll_to(self, x : int, y :int):
         """
         Scroll viewport.
+
         :param x: The amount to scroll horizontally.
         :param y: The amount to scroll vertically.
         """
+        self._log("Scroll to (%d,%d)." % (x,y), {"action": "scroll", "object": self, "x": x, "y": y})
+        
         self.driver.execute_script("window.scrollTo(%d, %d)" % (x, y))
         self._wait()
         self._define_element_labels()
@@ -274,6 +286,7 @@ class Browser:
         Take a screenshot of current viewport with every interactable
         element labeled.
         """
+        self._log("Take screenshot.", {"action": "screenshot", "object": self})
 
         screenshot = self.driver.get_screenshot_as_png()
 
@@ -312,10 +325,15 @@ class Browser:
 
     def close(self):
         """ Close the browser. """
+        self._log("Close %s" % self, {"action": "close", "object": self})
         self.driver.quit()
 
     def get_secrets_for_url(self, url : str) -> Iterable[Secret]:
-        """ Get secrets that match the url. """
+        """
+        Get secrets that match the url.
+
+        :param url: The URL to check against.
+        """
         return filter(lambda s: fnmatch(url, s.url_pattern), self.secrets)
 
     def get_secrets_for_current_url(self) -> Iterable[Secret]:
@@ -327,3 +345,31 @@ class Browser:
         url = url[len(purl.scheme + "://"):]
         creds = "%s:%s" % (quote_plus(username), quote_plus(password))
         return "%s://%s@%s" % (purl.scheme, creds, url)
+
+    def _define_element_labels(self):
+        self.element_labels = {}
+        label_elements = self.driver.find_elements(By.CSS_SELECTOR, "a[href],input,textarea,select,button")
+        counter = 0
+        for element in label_elements:
+            if not element.is_displayed() or not element.is_enabled(): continue
+                        
+            s1 = chr(65 + int(math.floor(counter / 9.0)) )
+            s2 = (counter % 9) + 1
+            counter += 1
+            self.element_labels["%s%d" % (s1, s2)] = element
+
+    def _get_element(self, label : str) -> WebElement:
+        element = self.element_labels.get(label)
+        if not element: raise ElementNotFoundException("Unable to find element labeled '%s'." % label)
+        return element
+
+    def _wait(self):
+        time.sleep(ACTION_WAIT_TIME)
+
+    def _wait_for_load(self):
+        while self.driver.execute_script("return document.readyState") != "complete":
+            time.sleep(1)
+    
+    def _log(self, message : str, params : dict = {}, level : int = logging.INFO):
+        params["_module"] = "browser"
+        if self.logger: self.logger.log(level, message, extra=params)
