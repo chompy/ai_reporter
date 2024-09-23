@@ -1,6 +1,0 @@
-pyyaml
-requests
-openai
-GitPython
-selenium
-pillow

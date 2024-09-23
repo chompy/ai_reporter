@@ -1,6 +1,19 @@
 # AI Reporting Library
-**Created by Nathan Ogden for Contextual Code**
+**By Nathan Ogden**
 
-This is still a WIP. I'm currently cleaning up and consolidating code from other repositories.
+-----
 
-This tool allow you to create AI generated reports based on information collected from code bases (via Gitlab/Github) and a web browser controlled by the AI via Selenium. Reports will be able to be chained together based on the results of previous reports in a workflow system.
+## Table of Contents
+
+- [Installation](#installation)
+- [License](#license)
+
+## Installation
+
+```console
+pip install git+https://github.com/chompy/ai_reporter
+```
+
+## License
+
+`ai-reporter` is distributed under the terms of the [MIT](https://spdx.org/licenses/MIT.html) license.

@@ -2,4 +2,6 @@
 /.env
 *.code-workspace
 *.pyc
+*.egg-info
 __pycache__
+/test*.py
