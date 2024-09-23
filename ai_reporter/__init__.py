@@ -32,7 +32,7 @@ def run_report(report_type : ReportType, config : dict = {}, logger : Optional[l
     report_values = {}
     current_report_type : Optional[ReportType] = report_type
     while current_report_type:
-        if logger: logger.info("Run report type '%s'." % current_report_type.name, extra={"prompt": current_report_type.prompt.to_dict()})
+        if logger: logger.info("Run report type '%s'." % current_report_type.name, extra={"report_prompt": current_report_type.prompt.to_dict()})
         bot_results = run_bot(current_report_type.prompt, config, logger)
         report = Report(current_report_type, bot_results)
         yield report

@@ -63,7 +63,7 @@ class BaseWebTool(BaseTool):
         path = os.path.join(self.screenshot_log_path, "web_%d.png" % (
             datetime.now().timestamp(), 
         ))
-        self._log("Save screenshot at '%s'." % path, {"action": "save screenshot", "object": self, "path": screenshot})
+        self._log("Save screenshot at '%s'." % path, {"action": "save screenshot", "object": self, "screenshot_path": screenshot})
         with open(path, "wb") as f: f.write(screenshot)
         return path
 

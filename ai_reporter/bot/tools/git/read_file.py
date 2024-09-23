@@ -32,7 +32,7 @@ class GitReadFileTool(BaseGitTool):
             commit_obj = self.repo.commit(commit)
             out = self._search_tree(file, commit_obj.tree)
         except BadName as e:
-            self._log_error("Error occured trying to read file.", e, {"repository": repository, "file": file, "commit": commit})
+            self._log_error("Error occured trying to read file.", e, {"git_repository": repository, "git_file": file, "git_commit": commit})
             raise ToolPropertyInvalidError(self.name(), "commit")
         return ToolMessageResponse(out if out else "(file not found)")
 

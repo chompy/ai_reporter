@@ -129,7 +129,7 @@ class Browser:
         :param handle: Handle of the window/tab to switch to.
         """
         self._log("Switch active window.", {"action": "switch window", 
-            "object": self, "handle": handle, "previous_handle": self.driver.current_window_handle})
+            "object": self, "window_handle": handle, "previous_window_handle": self.driver.current_window_handle})
         self.driver.current_window_handle
         self.driver.switch_to.window(handle)
         self._wait()
@@ -142,7 +142,7 @@ class Browser:
         :param url: URL to open.
         """
         self._log("Goto '%s'." % url, {"action": "goto url", 
-            "object": self, "url": url, "previous_url": self.driver.current_url})
+            "object": self, "browser_url": url, "previous_browser_url": self.driver.current_url})
 
         start = time.time()
         self.window_list = []
@@ -164,7 +164,7 @@ class Browser:
 
         :param label: Element label.
         """
-        self._log("Click element '%s'." % label, {"action": "click", "object": self, "label": label})
+        self._log("Click element '%s'." % label, {"action": "click", "object": self, "element_label": label})
 
         start = time.time()
         current_url = self.driver.current_url
@@ -197,7 +197,7 @@ class Browser:
 
         :param label: Element label.
         """
-        self._log("Hover over element '%s'." % label, {"action": "hover", "object": self, "label": label})
+        self._log("Hover over element '%s'." % label, {"action": "hover", "object": self, "element_label": label})
 
         ac = ActionChains(self.driver)
         ac.move_to_element(self._get_element(label))
@@ -210,7 +210,7 @@ class Browser:
         :param label: Element label.
         :param text: Text to add to input element.
         """
-        self._log("Input text in to element '%s'." % label, {"action": "input", "object": self, "label": label, "text": text})
+        self._log("Input text in to element '%s'." % label, {"action": "input", "object": self, "element_label": label, "element_text": text})
 
         element = self._get_element(label)
         ActionChains(self.driver).click(element).key_down(Keys.LEFT_CONTROL).send_keys("a").key_up(Keys.LEFT_CONTROL).key_down(Keys.DELETE).key_up(Keys.DELETE).perform()
@@ -240,7 +240,7 @@ class Browser:
         :param label: Element label.
         :param option: The option to select.
         """
-        self._log("Change selection for element '%s'." % label, {"action": "submit", "object": self, "label": label, "option": option})
+        self._log("Change selection for element '%s'." % label, {"action": "submit", "object": self, "element_label": label, "element_option": option})
 
         element = self._get_element(label)
         if element.tag_name != "select": raise InvalidElementException("Element '%s' is not a SELECT element." % label)
@@ -254,7 +254,7 @@ class Browser:
         :param x: The amount to scroll horizontally.
         :param y: The amount to scroll vertically.
         """
-        self._log("Scroll to (%d,%d)." % (x,y), {"action": "scroll", "object": self, "x": x, "y": y})
+        self._log("Scroll to (%d,%d)." % (x,y), {"action": "scroll", "object": self, "scroll_x": x, "scroll_y": y})
         
         self.driver.execute_script("window.scrollTo(%d, %d)" % (x, y))
         self._wait()
@@ -286,7 +286,7 @@ class Browser:
         Take a screenshot of current viewport with every interactable
         element labeled.
         """
-        self._log("Take screenshot.", {"action": "screenshot", "object": self})
+        self._log("Take screenshot.", {"action": "screenshot", "object": self, "with_element_labels": add_element_labels})
 
         screenshot = self.driver.get_screenshot_as_png()
 

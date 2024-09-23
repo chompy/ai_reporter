@@ -32,7 +32,7 @@ class GitSearchFileTool(BaseGitTool):
             commit_obj = self.repo.commit(commit)
             out = "\n".join(list(set(self._search_tree(name, commit_obj.tree))))
         except BadName as e:
-            self._log_error("Error occured when trying search tree.", e, {"name": name, "repository": repository, "commit": commit})
+            self._log_error("Error occured when trying search tree.", e, {"search_filename": name, "git_repository": repository, "git_commit": commit})
             raise ToolPropertyInvalidError(self.name(), "commit")
         return ToolMessageResponse(out if out else "(no files found)")
 

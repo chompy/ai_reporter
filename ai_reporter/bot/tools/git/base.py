@@ -40,7 +40,7 @@ class BaseGitTool(BaseTool):
         try:
             return Repo.clone_from(repo, path_to)
         except GitCommandError as e:
-            self._log_error("Git error when cloning '%s'." % repo, e, {"repository": repo})
+            self._log_error("Git error when cloning '%s'." % repo, e, {"git_repository": repo})
             # TODO is there a way to determine if this is a bot error or a user configuration error?
             raise ToolPropertyInvalidError(self.name(), "repository")
 

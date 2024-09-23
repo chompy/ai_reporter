@@ -49,7 +49,7 @@ class BaseTool:
 
     def _log(self, message, params : dict = {}, level : int = logging.INFO):
         params["_module"] = "tool"
-        params["tool"] = self.name()
+        params["tool_name"] = self.name()
         if self.logger: self.logger.log(level, message, extra=params)
 
     def _log_error(self, message, error : Exception, params : dict = {}, level : int = logging.ERROR):

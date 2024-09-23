@@ -45,19 +45,19 @@ class BaseClient:
 
     def _log_start(self, prompt : Prompt):
         self._log("Start %s." % self.name(), {
-            "action": "start", "object": self, "prompt": prompt.to_dict()})
+            "action": "start", "object": self, "bot_prompt": prompt.to_dict()})
 
     def _log_iteration(self, iteration : int):
-        self._log("Bot iteration #%d." % iteration, {"action": "interation", "object": self, "iteration": iteration})
+        self._log("Bot iteration #%d." % iteration, {"action": "interation", "object": self, "bot_iteration": iteration})
 
     def _log_max_iterations(self, iteration : int):
         self._log("Bot has reached maximum allowed iterations. Asking it to complete analysis.", {
-            "action": "max interations", "object": self, "iteration": iteration})
+            "action": "max interations", "object": self, "bot_iteration": iteration})
 
     def _log_error_retry(self, e : MalformedBotResponseError, retry_no : int):
         self._log("Retry #%d after '%s' error." % (retry_no, e.__class__.__name__), {
             "action": "retry", "object": self, "error_class": e.__class__.__name__, 
-            "error": str(e), "retry_message": e.retry_message()}, level=logging.WARNING)
+            "error": str(e), "bot_retry_message": e.retry_message()}, level=logging.WARNING)
 
     def _log_done(self, tool_response : ToolDoneResponse):
         self._log("Finished report via '%s' tool call." % (tool_response.tool_name if tool_response.tool_name else "(unknown)"), {

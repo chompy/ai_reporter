@@ -62,7 +62,7 @@ class ToolHandler:
         :param name: Name of tool to execute.
         :param args: The arguments to pass.
         """
-        self._log("Call tool '%s'." % name, {"action": "call", "object": "tool '%s'" % name, "args": args})
+        self._log("Call tool '%s'." % name, {"action": "call", "object": "tool '%s'" % name, "tool_name": name, "tool_args": args})
         try:
             for tool_class in self.tools:
                 this_tool_name = tool_class.name()
@@ -83,7 +83,8 @@ class ToolHandler:
                     # call tool
                     tool_obj = tool_class(state=self.state, logger=self.logger, **tool_config)
                     resp = tool_obj.execute(**args)
-                    self._log("Response from %s." % tool_obj, {"action": "response", "object": "tool '%s'" % name, "response": resp.to_dict()})
+                    self._log("Response from %s." % tool_obj, {"action": "response", "object": "tool '%s'" % name, 
+                        "tool_response": resp.to_dict(), "tool_name": name, "tool_args": args})
                     return resp
         except TypeError as e:
             self._log_error(name, e)
@@ -98,5 +99,5 @@ class ToolHandler:
         if self.logger: self.logger.log(level, message, extra=params)
 
     def _log_error(self, tool_name : str, e : Exception):
-        self._log("Error when calling tool '%s'." % tool_name, {"action": "error", "object": "tool '%s'" % tool_name, "error_class": e.__class__.__name__,
-        "error": str(e)}, level=logging.ERROR)
+        self._log("Error when calling tool '%s'." % tool_name, {"action": "error", "object": "tool '%s'" % tool_name, 
+            "tool_name": tool_name, "error_class": e.__class__.__name__, "error": str(e)}, level=logging.ERROR)
