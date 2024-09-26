@@ -1,11 +1,15 @@
-from ...property import PropertyDefinition
-from ..response import ToolMessageResponse
-from .base import BaseGitTool
+# SPDX-FileCopyrightText: 2024-present Nathan Ogden <nathan@ogden.tech>
+#
+# SPDX-License-Identifier: MIT
 
-MAX_FILE_SIZE = 131072 # 128KB
+from ai_reporter.bot.property import PropertyDefinition
+from ai_reporter.bot.tools.git.base import BaseGitTool
+from ai_reporter.bot.tools.response import ToolMessageResponse
+
+MAX_FILE_SIZE = 131072  # 128KB
+
 
 class GitFileHistoryTool(BaseGitTool):
-
     @staticmethod
     def name() -> str:
         return "git-file-history"
@@ -16,14 +20,15 @@ class GitFileHistoryTool(BaseGitTool):
 
     @staticmethod
     def properties():
-        return BaseGitTool.properties() + [
-            PropertyDefinition("file", description="The file to view the history of.", required=True)
+        return [
+            *BaseGitTool.properties(),
+            PropertyDefinition("file", description="The file to view the history of.", required=True),
         ]
 
-    def execute(self, repository : str, file : str, *args, **kwargs):
+    def execute(self, repository: str, file: str, **kwargs):
         super().execute(repository=repository, **kwargs)
         out = ""
         for commit in self.repo.iter_commits(paths=file):
             out += self._display_commit(commit) + "\n"
         out = out.strip()
-        return ToolMessageResponse(out if out else "(no commits found)")    
+        return ToolMessageResponse(out if out else "(no commits found)")

@@ -1,20 +1,26 @@
-from abc import abstractmethod
+# SPDX-FileCopyrightText: 2024-present Nathan Ogden <nathan@ogden.tech>
+#
+# SPDX-License-Identifier: MIT
+
+from __future__ import annotations
+
 import logging
 import os
 import tempfile
-from typing import Any, Optional
+from abc import abstractmethod
+from typing import TYPE_CHECKING, Any
 
-from git import exc
+from ai_reporter.utils import check_config_type
 
-from ...utils import check_config_type
-from ..property import PropertyDefinition
-from .response import ToolResponseBase
+if TYPE_CHECKING:
+    from ai_reporter.bot.property import PropertyDefinition
+    from ai_reporter.bot.tools.response import ToolResponseBase
+
 
 class BaseTool:
+    """Base class for tool."""
 
-    """ Base class for tool. """
-
-    def __init__(self, state : dict[str,object], logger : Optional[logging.Logger] = None, **kwargs):
+    def __init__(self, state: dict[str, object], logger: logging.Logger | None = None, **kwargs):
         self.state = state
         self.logger = logger
         self.args = kwargs
@@ -24,40 +30,41 @@ class BaseTool:
     @staticmethod
     @abstractmethod
     def name() -> str:
-        """ The name of the tool. """
+        """The name of the tool."""
         ...
 
     @staticmethod
     @abstractmethod
     def description(*args, **kwargs) -> str:
-        """ A description to tell the bot what the tool does. """
+        """A description to tell the bot what the tool does."""
         ...
 
     @staticmethod
     @abstractmethod
     def properties(*args, **kwargs) -> list[PropertyDefinition]:
-        """ The parameters of the arguments to call the tool with. """
+        """The parameters of the arguments to call the tool with."""
         ...
 
     @abstractmethod
-    def execute(self, *args, **kwargs) -> ToolResponseBase: 
-        """ Execute the tool. """
+    def execute(self, *args, **kwargs) -> ToolResponseBase:
+        """Execute the tool."""
         ...
 
     def __str__(self):
-        return "tool '%s'" % self.name()
+        return f"tool '{self.name()}'"
 
-    def _log(self, message, params : dict = {}, level : int = logging.INFO):
+    def _log(self, message, params: dict | None = None, level: int = logging.INFO):
         params["_module"] = "tool"
         params["tool_name"] = self.name()
-        if self.logger: self.logger.log(level, message, extra=params)
+        if self.logger:
+            self.logger.log(level, message, extra=params)
 
-    def _log_error(self, message, error : Exception, params : dict = {}, level : int = logging.ERROR):
+    def _log_error(self, message, error: Exception, params: dict | None = None, level: int = logging.ERROR):
         params["error_class"] = error.__class__.__name__
         params["error"] = str(error)
         params["action"] = "error"
         params["object"] = self
         self._log(message, params, level)
 
-    def _check_config_type(self, value : Any, expected_type : type, name : Optional[str] = None):
+    def _check_config_type(self, value: Any, expected_type: type, name: str | None = None):
         check_config_type(value, expected_type, name)

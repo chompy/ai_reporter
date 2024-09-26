@@ -24,8 +24,14 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
-dependencies = []
-
+dependencies = [
+  "pyyaml",
+  "requests",
+  "openai",
+  "GitPython",
+  "selenium",
+  "pillow"
+]
 [project.urls]
 Documentation = "https://github.com/chompy/ai_reporter#readme"
 Issues = "https://github.com/chompy/ai_reporter/issues"
@@ -59,3 +65,8 @@ exclude_lines = [
   "if __name__ == .__main__.:",
   "if TYPE_CHECKING:",
 ]
+
+[tool.ruff.lint.extend-per-file-ignores]
+"src/ai_reporter/bot/tools/web/secret.py" = ["A002"]
+"src/ai_reporter/bot/property.py" = ["A002"]
+"examples/*" = ["ALL"]

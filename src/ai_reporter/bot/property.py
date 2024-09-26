@@ -1,5 +1,12 @@
-from typing import Optional, Self, Union, Any
+# SPDX-FileCopyrightText: 2024-present Nathan Ogden <nathan@ogden.tech>
+#
+# SPDX-License-Identifier: MIT
+
+from __future__ import annotations
+
 from enum import StrEnum
+from typing import Any, Self
+
 
 class PropertyType(StrEnum):
     STR = "string"
@@ -10,19 +17,20 @@ class PropertyType(StrEnum):
     BOOL = "boolean"
     ENUM = "enum"
 
-class PropertyDefinition:
 
-    """ Defines a property value and its constraints. """
+class PropertyDefinition:
+    """Defines a property value and its constraints."""
 
     def __init__(
         self,
-        name : str,
-        type : Union[PropertyType, str] = PropertyType.STR,
-        description : str = "",
-        min : Optional[int] = 0,
-        max : Optional[int] = 0,
-        choices : Optional[list[str]] = [],
-        required : bool = False
+        name: str,
+        type: PropertyType | str = PropertyType.STR,
+        description: str = "",
+        min: int | None = 0,
+        max: int | None = 0,
+        choices: list[str] | None = None,
+        *,
+        required: bool = False,
     ):
         self.name = name
         self.type = PropertyType(type)
@@ -33,32 +41,32 @@ class PropertyDefinition:
         self.required = required
 
     @classmethod
-    def from_dict(cls,  data : dict[str,dict]) -> list[Self]:
-        # TODO allow import of JSON schema (https://json-schema.org/)
+    def from_dict(cls, data: dict[str, dict]) -> list[Self]:
+        # TODO: allow import of JSON schema (https://json-schema.org/)
         out = []
         for k, v in data.items():
             out.append(cls(name=k, **v))
         return out
 
-    def to_dict(self) -> dict[str,object]:
-        out : dict[str,object] = {
+    def to_dict(self) -> dict[str, object]:
+        out: dict[str, object] = {
             "type": str(PropertyType.STR) if self.type == PropertyType.ENUM else str(self.type),
-            "description": self.description
+            "description": self.description,
         }
         match self.type:
             case PropertyType.INT | PropertyType.FLOAT:
-                if self.min: out["minimum"] = self.min
-                if self.max: out["maximum"] = self.max
+                if self.min:
+                    out["minimum"] = self.min
+                if self.max:
+                    out["maximum"] = self.max
             case PropertyType.LIST:
-                # TODO allow other list item data types
-                out["items"] = {
-                    "type": "string"
-                }
+                # TODO: allow other list item data types
+                out["items"] = {"type": "string"}
             case PropertyType.ENUM:
                 out["enum"] = self.choices
         return out
 
-    def check_type(self, value : Any) -> bool:
+    def check_type(self, value: Any) -> bool:
         """
         Check if given value matches property type.
 
@@ -78,7 +86,7 @@ class PropertyDefinition:
             case PropertyType.LIST | PropertyType.ENUM:
                 return isinstance(value, list)
 
-    def check_required(self, value : Any) -> bool:
+    def check_required(self, value: Any) -> bool:
         """
         Check if required value is not none.
 
@@ -86,17 +94,19 @@ class PropertyDefinition:
         """
         return value is not None or not self.required
 
-    def check_range(self, value : Any) -> bool:
+    def check_range(self, value: Any) -> bool:
         """
         Check if given value is in range.
 
         :param value: Value to check.
         """
-        if self.min and value < self.min: return False
-        if self.max and value > self.max: return False
+        if self.min and value < self.min:
+            return False
+        if self.max and value > self.max:
+            return False
         return True
 
-    def check_choices(self, value : Any) -> bool:
+    def check_choices(self, value: Any) -> bool:
         """
         Check if given value is a valid choice.
 

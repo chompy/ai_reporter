@@ -1,7 +1,11 @@
-class ElementNotFoundException(Exception):
-    """ Element was not found. """
-    pass
+# SPDX-FileCopyrightText: 2024-present Nathan Ogden <nathan@ogden.tech>
+#
+# SPDX-License-Identifier: MIT
 
-class InvalidElementException(Exception):
-    """ Tried to perform an invalid action on an element. """
-    pass
+
+class ElementNotFoundError(Exception):
+    """Element was not found."""
+
+
+class InvalidElementError(Exception):
+    """Tried to perform an invalid action on an element."""

@@ -1,8 +1,16 @@
-from typing import Iterable
+# SPDX-FileCopyrightText: 2024-present Nathan Ogden <nathan@ogden.tech>
+#
+# SPDX-License-Identifier: MIT
 
-from ..utils import check_config_type
-from .image import Image
-from .property import PropertyDefinition
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Iterable
+
+from ai_reporter.utils import check_config_type
+
+if TYPE_CHECKING:
+    from ai_reporter.bot.image import Image
+    from ai_reporter.bot.property import PropertyDefinition
 
 DEFAULT_SYSTEM_PROMPT = """
 Using the tools available to you, perform an analysis of the user's message. Use the `done` tool to signal the completion of your analysis.
@@ -12,25 +20,24 @@ DEFAULT_MAX_ITERATION_PROMPT = """
 Please complete your analysis to the best of your ability with the `done` tool.
 """
 
-class Prompt:
 
+class Prompt:
     """
     The prompt for the AI model as well as the desired properties to include in the report
     """
 
     def __init__(
-        self, 
-        user_prompt : str,
-        report_properties : Iterable[PropertyDefinition],
-        system_prompt : str = DEFAULT_SYSTEM_PROMPT,
-        images : Iterable[Image] = [],
-        tools : dict[str,dict] = {},
-        model : str = "gpt-4o-mini",
-        max_iterations : int = 20,
-        max_error_retry : int = 3,
-        max_iteration_prompt : str = DEFAULT_MAX_ITERATION_PROMPT
+        self,
+        user_prompt: str,
+        report_properties: Iterable[PropertyDefinition],
+        system_prompt: str = DEFAULT_SYSTEM_PROMPT,
+        images: Iterable[Image] | None = None,
+        tools: dict[str, dict] | None = None,
+        model: str = "gpt-4o-mini",
+        max_iterations: int = 20,
+        max_error_retry: int = 3,
+        max_iteration_prompt: str = DEFAULT_MAX_ITERATION_PROMPT,
     ):
-
         """
         :param user_prompt: The query for the bot.
         :param report_properties: Definition of the values the bot should return.
@@ -48,10 +55,12 @@ class Prompt:
         self.report_properties = report_properties
         check_config_type(system_prompt, str, "prompt:system_prompt")
         self.system_prompt = system_prompt
-        check_config_type(images, Iterable, "prompt:images")
-        self.images = images
-        check_config_type(tools, dict, "prompt:tools")
-        self.tools = tools
+        if images:
+            check_config_type(images, Iterable, "prompt:images")
+        self.images = images if images else []
+        if tools:
+            check_config_type(tools, dict, "prompt:tools")
+        self.tools = tools if tools else {}
         check_config_type(model, str, "prompt:model")
         self.model = model
         check_config_type(max_iterations, int, "prompt:max_iterations")
@@ -62,7 +71,4 @@ class Prompt:
         self.max_iteration_prompt = max_iteration_prompt
 
     def to_dict(self) -> dict:
-        return {
-            **self.__dict__,
-            "images": list(map(lambda i: i.mime, self.images))
-        }
+        return {**self.__dict__, "images": [i.mime for i in self.images]}

@@ -5,3 +5,5 @@
 *.egg-info
 __pycache__
 /test*.py
+/dist
+/.ruff_cache

@@ -1,11 +1,17 @@
-from . import client as _client
+# SPDX-FileCopyrightText: 2024-present Nathan Ogden <nathan@ogden.tech>
+#
+# SPDX-License-Identifier: MIT
+
+
+from ai_reporter.bot import image as _image
+from ai_reporter.bot import prompt as _prompt
+from ai_reporter.bot import property as _property
+from ai_reporter.bot.client import client as _client
+from ai_reporter.bot.results import results as _results
+
 get_bot_client = _client.get_bot_client
-from . import prompt as _prompt
 Prompt = _prompt.Prompt
-from . import property as _property
 PropertyDefinition = _property.PropertyDefinition
 PropertyType = _property.PropertyType
-from . import image as _image
 Image = _image.Image
-from . import results as _results
 BotResults = _results.BotResults

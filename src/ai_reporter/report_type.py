@@ -1,16 +1,25 @@
-from typing import Callable, Optional, Self
+# SPDX-FileCopyrightText: 2024-present Nathan Ogden <nathan@ogden.tech>
+#
+# SPDX-License-Identifier: MIT
 
-from .bot.prompt import Prompt
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Callable, Self
+
+if TYPE_CHECKING:
+    from ai_reporter.bot.prompt import Prompt
+
 
 class ReportType:
-
     """
     Defines a type of report which contains the information needed to run a report. This includes
     the prompting information for the bot as well as an optional callback to provide additional report types
     that can be chained together.
     """
 
-    def __init__(self, name : str, prompt : Prompt, next_report_type : Optional[Callable[[dict[str,dict]], Optional[Self]]] = None):
+    def __init__(
+        self, name: str, prompt: Prompt, next_report_type: Callable[[dict[str, dict]], Self | None] | None = None
+    ):
         """
         :param name: Name of report type.
         :param prompt: The prompt to use when running this report.
@@ -20,18 +29,14 @@ class ReportType:
         self.prompt = prompt
         self.next_report_type = next_report_type
 
-    def next(self, values : dict[str,dict] = {}) -> Optional[Self]:
+    def next(self, values: dict[str, dict] | None = None) -> Self | None:
         """
         Get the next report type based on the results of a report ran with this report type.
-        
         :param values: Dictionary of previous report type names with their report values.
         """
-        if not self.next_report_type: return None
-        return self.next_report_type(values)
+        if values is None:
+            values = {}
+        return self.next_report_type(values) if self.next_report_type else None
 
     def to_dict(self) -> dict:
-        return {
-            "name": self.name,
-            "prompt": self.prompt.to_dict(),
-            "has_next_report": True if self.next_report_type else False
-        }
+        return {"name": self.name, "prompt": self.prompt.to_dict(), "has_next_report": bool(self.next_report_type)}

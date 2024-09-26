@@ -1,25 +1,25 @@
-from ...response import ToolMessageResponse
-from .....bot.property import PropertyDefinition
-from .base import BaseWebTool
+# SPDX-FileCopyrightText: 2024-present Nathan Ogden <nathan@ogden.tech>
+#
+# SPDX-License-Identifier: MIT
+
+from ai_reporter.bot.property import PropertyDefinition
+from ai_reporter.bot.tools.response import ToolMessageResponse
+from ai_reporter.bot.tools.web.tools.base import BaseWebTool
+
 
 class WebClickTool(BaseWebTool):
-
     @staticmethod
     def name() -> str:
         return "web-click"
 
     @staticmethod
-    def description(**kwargs):
+    def description():
         return "Click on an element in the web browser."
 
     @staticmethod
-    def properties(**kwargs):
-        return  [
-            PropertyDefinition("label", description="The two character element label.", required=True)
-        ]
+    def properties():
+        return [PropertyDefinition("label", description="The two character element label.", required=True)]
 
-    def execute(self, label : str, **kwargs):
+    def execute(self, label: str):
         self.browser.click(label)
-        return ToolMessageResponse(
-            self._get_browser_window_info_text(), [self._screenshot()]
-        )
+        return ToolMessageResponse(self._get_browser_window_info_text(), [self._screenshot()])

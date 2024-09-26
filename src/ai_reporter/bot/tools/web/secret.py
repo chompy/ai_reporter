@@ -1,16 +1,22 @@
+# SPDX-FileCopyrightText: 2024-present Nathan Ogden <nathan@ogden.tech>
+#
+# SPDX-License-Identifier: MIT
+
+
 from enum import StrEnum
 
-from ....utils import check_config_type
+from ai_reporter.utils import check_config_type
+
 
 class SecretType(StrEnum):
     HTTP_BASIC = "http"
     FORM = "form"
 
+
 class Secret:
+    """A secret value for use with the web browser either HTTP basic auth credientials or a username/password for a login form."""
 
-    """ A secret value for use with the web browser either HTTP basic auth credientials or a username/password for a login form. """
-
-    def __init__(self, key : str, value : str, type : SecretType = SecretType.FORM, url_pattern : str = "*"):
+    def __init__(self, key: str, value: str, type: SecretType = SecretType.FORM, url_pattern: str = "*"):
         check_config_type(key, str, "tools.web.secrets.[].key")
         check_config_type(value, str, "tools.web.secrets.[].value")
         check_config_type(type, str, "tools.web.secrets.[].type")
