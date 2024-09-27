@@ -14,12 +14,10 @@ class WebSelectTool(BaseWebTool):
     def name() -> str:
         return "web-select"
 
-    @staticmethod
-    def description():
+    def description(self):
         return "Change the selection in a SELECT element in the web browser."
 
-    @staticmethod
-    def properties():
+    def properties(self):
         return [
             PropertyDefinition("label", description="The two character element label.", required=True),
             PropertyDefinition(

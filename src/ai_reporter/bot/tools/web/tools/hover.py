@@ -13,12 +13,10 @@ class WebHoverTool(BaseWebTool):
     def name() -> str:
         return "web-hover"
 
-    @staticmethod
-    def description():
+    def description(self):
         return "Hover over an element in the web browser."
 
-    @staticmethod
-    def properties():
+    def properties(self):
         return [PropertyDefinition("label", description="The two character element label.", required=True)]
 
     def execute(self, label: str):

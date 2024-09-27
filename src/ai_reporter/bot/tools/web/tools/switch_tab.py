@@ -13,12 +13,10 @@ class WebSwitchTabTool(BaseWebTool):
     def name() -> str:
         return "web-switch-tab"
 
-    @staticmethod
-    def description():
+    def description(self):
         return "Switch to a different tab in the web browser."
 
-    @staticmethod
-    def properties():
+    def properties(self):
         return [PropertyDefinition("tab_number", type=PropertyType.INT, description="The tab to switch to.", min=1)]
 
     def execute(self, tab_number: int):

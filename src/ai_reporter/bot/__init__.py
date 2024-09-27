@@ -6,8 +6,8 @@
 from ai_reporter.bot import image as _image
 from ai_reporter.bot import prompt as _prompt
 from ai_reporter.bot import property as _property
-from ai_reporter.bot.client import client as _client
-from ai_reporter.bot.results import results as _results
+from ai_reporter.bot import client as _client
+from ai_reporter.bot import results as _results
 
 get_bot_client = _client.get_bot_client
 Prompt = _prompt.Prompt

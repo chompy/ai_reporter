@@ -12,12 +12,10 @@ class WebSubmitTool(BaseWebTool):
     def name() -> str:
         return "web-submit"
 
-    @staticmethod
-    def description():
+    def description(self):
         return "Submit the current form in the web browser."
 
-    @staticmethod
-    def properties():
+    def properties(self):
         return []
 
     def execute(self):

@@ -17,12 +17,10 @@ class GitListDirTool(BaseGitTool):
     def name() -> str:
         return "git-list-dir"
 
-    @staticmethod
-    def description():
+    def description(self):
         return "List all files for a given directory in the repository."
 
-    @staticmethod
-    def properties():
+    def properties(self):
         return [
             *BaseGitTool.properties(),
             PropertyDefinition(

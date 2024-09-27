@@ -14,12 +14,10 @@ class GitFileHistoryTool(BaseGitTool):
     def name() -> str:
         return "git-file-history"
 
-    @staticmethod
-    def description():
+    def description(self):
         return "Show the commit history of a file in the repository."
 
-    @staticmethod
-    def properties():
+    def properties(self):
         return [
             *BaseGitTool.properties(),
             PropertyDefinition("file", description="The file to view the history of.", required=True),

@@ -14,12 +14,10 @@ class WebScrollTool(BaseWebTool):
     def name() -> str:
         return "web-scroll"
 
-    @staticmethod
-    def description():
+    def description(self):
         return "Scroll the the web browser."
 
-    @staticmethod
-    def properties():
+    def properties(self):
         return [
             PropertyDefinition(
                 "direction",

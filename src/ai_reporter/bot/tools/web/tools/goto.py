@@ -12,12 +12,10 @@ class WebGotoTool(BaseWebTool):
     def name() -> str:
         return "web-goto"
 
-    @staticmethod
-    def description():
+    def description(self):
         return "Navigate the web browser to the given URL."
 
-    @staticmethod
-    def properties():
+    def properties(self):
         return [PropertyDefinition("url", description="The URL to navigate to.", required=True)]
 
     def execute(self, url: str):

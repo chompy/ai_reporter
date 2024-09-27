@@ -19,12 +19,10 @@ class GitReadFileTool(BaseGitTool):
     def name() -> str:
         return "git-read-file"
 
-    @staticmethod
-    def description():
+    def description(self):
         return "Read the contents of a file in the repostory."
 
-    @staticmethod
-    def properties():
+    def properties(self):
         return [
             *BaseGitTool.properties(),
             PropertyDefinition("file", description="The file to read.", required=True),

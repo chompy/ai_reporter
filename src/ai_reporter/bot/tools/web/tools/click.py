@@ -12,12 +12,10 @@ class WebClickTool(BaseWebTool):
     def name() -> str:
         return "web-click"
 
-    @staticmethod
-    def description():
+    def description(self):
         return "Click on an element in the web browser."
 
-    @staticmethod
-    def properties():
+    def properties(self):
         return [PropertyDefinition("label", description="The two character element label.", required=True)]
 
     def execute(self, label: str):

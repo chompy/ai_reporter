@@ -26,8 +26,7 @@ class BaseGitTool(BaseTool):
         self.repo = self._open_repo(repository)
         return ToolMessageResponse("(none)")
 
-    @staticmethod
-    def properties():
+    def properties(self):
         return [PropertyDefinition("repository", description="The Git repository to use.", required=True)]
 
     def _open_repo(self, repo: str) -> Repo:

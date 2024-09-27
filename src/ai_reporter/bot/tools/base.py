@@ -23,7 +23,7 @@ class BaseTool:
     def __init__(self, state: dict[str, object], logger: logging.Logger | None = None, **kwargs):
         self.state = state
         self.logger = logger
-        self.args = kwargs
+        self.kwargs = kwargs
         self.work_path = os.path.join(tempfile.gettempdir(), "_ai_reporter_work")
         os.makedirs(self.work_path, exist_ok=True)
 
@@ -33,15 +33,13 @@ class BaseTool:
         """The name of the tool."""
         ...
 
-    @staticmethod
     @abstractmethod
-    def description(*args, **kwargs) -> str:
+    def description(self) -> str:
         """A description to tell the bot what the tool does."""
         ...
 
-    @staticmethod
     @abstractmethod
-    def properties(*args, **kwargs) -> list[PropertyDefinition]:
+    def properties(self) -> list[PropertyDefinition]:
         """The parameters of the arguments to call the tool with."""
         ...
 

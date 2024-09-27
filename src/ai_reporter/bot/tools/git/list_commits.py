@@ -17,12 +17,10 @@ class GitListCommitsTool(BaseGitTool):
     def name() -> str:
         return "git-list-commits"
 
-    @staticmethod
-    def description():
+    def description(self):
         return "List %d commits in the repository." % LIMIT
 
-    @staticmethod
-    def properties():
+    def properties(self):
         return [
             *BaseGitTool.properties(),
             PropertyDefinition(

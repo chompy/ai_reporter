@@ -19,12 +19,10 @@ class GitSearchFileTool(BaseGitTool):
     def name() -> str:
         return "git-search-file"
 
-    @staticmethod
-    def description():
+    def description(self):
         return "Search the the repository for files matching the given name, wildcards are supported."
 
-    @staticmethod
-    def properties():
+    def properties(self):
         return [
             *BaseGitTool.properties(),
             PropertyDefinition("name", description="The name to search for.", required=True),

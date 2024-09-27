@@ -12,12 +12,10 @@ class WebElementTool(BaseWebTool):
     def name() -> str:
         return "web-element"
 
-    @staticmethod
-    def description():
+    def description(self):
         return "Retrieve information about an element in the web browser."
 
-    @staticmethod
-    def properties():
+    def properties(self):
         return [PropertyDefinition("label", description="The two character element label.", required=True)]
 
     def execute(self, label: str):

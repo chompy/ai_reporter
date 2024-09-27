@@ -14,12 +14,10 @@ class WebPasswordTool(BaseWebTool):
     def name() -> str:
         return "web-password"
 
-    @staticmethod
-    def description():
+    def description(self):
         return "Input a password in to a password type input element in the web browser."
 
-    @staticmethod
-    def properties():
+    def properties(self):
         return [
             PropertyDefinition("label", description="The two character element label.", required=True),
             PropertyDefinition("username", description="The username for the password.", required=True),
