@@ -29,8 +29,8 @@ def run_bot(prompt: Prompt, config: dict | None = None, logger: Logger | None = 
     :param config: Bot client configuration.
     :param logger: Optional logger.
     """
-    bot_client_config = config.get("bot_client", "openai") if config else {}
-    return get_bot_client(bot_client_config, config if config else {}, logger).run(prompt)
+    bot_client_name = config.get("bot_client", "openai") if config else "openai"
+    return get_bot_client(bot_client_name, config if config else {}, logger).run(prompt)
 
 
 def run_report(report_type: ReportType, config: dict | None = None, logger: Logger | None = None) -> Iterator[Report]:

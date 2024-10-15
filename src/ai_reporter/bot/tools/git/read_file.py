@@ -24,7 +24,7 @@ class GitReadFileTool(BaseGitTool):
 
     def properties(self):
         return [
-            *BaseGitTool.properties(),
+            *super().properties(),
             PropertyDefinition("file", description="The file to read.", required=True),
             PropertyDefinition(
                 "commit",
@@ -32,7 +32,7 @@ class GitReadFileTool(BaseGitTool):
             ),
         ]
 
-    def execute(self, repository: str, file: str, commit: str = "HEAD", **kwargs):
+    def execute(self, repository: str, file: str, commit: str = "HEAD", *_, **kwargs):
         super().execute(repository=repository, **kwargs)
         out = ""
         try:
@@ -48,4 +48,7 @@ class GitReadFileTool(BaseGitTool):
         return ToolMessageResponse(out if out else "(file not found)")
 
     def _search_tree(self, file: str, tree: Tree) -> str | None:
-        return next(filter(lambda i: isinstance(i, Blob) and i.path == file.lstrip("/"), tree.traverse), None)
+        for i in tree.traverse():
+            if isinstance(i, Blob) and i.path == file.lstrip("/"):
+                return str(i.path)
+        return None

@@ -52,12 +52,16 @@ class BaseTool:
         return f"tool '{self.name()}'"
 
     def _log(self, message, params: dict | None = None, level: int = logging.INFO):
+        if params is None:
+            params = {}
         params["_module"] = "tool"
         params["tool_name"] = self.name()
         if self.logger:
             self.logger.log(level, message, extra=params)
 
     def _log_error(self, message, error: Exception, params: dict | None = None, level: int = logging.ERROR):
+        if params is None:
+            params = {}
         params["error_class"] = error.__class__.__name__
         params["error"] = str(error)
         params["action"] = "error"

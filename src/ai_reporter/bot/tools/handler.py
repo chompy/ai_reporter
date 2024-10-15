@@ -85,6 +85,8 @@ class ToolHandler:
         raise ToolNotDefinedError(name)
 
     def _log(self, message: str, params: dict | None = None, level: int = logging.INFO):
+        if params is None:
+            params = {}
         params["_module"] = "tool"
         if self.logger:
             self.logger.log(level, message, extra=params)

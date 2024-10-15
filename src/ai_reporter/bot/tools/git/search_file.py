@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 from fnmatch import fnmatch
+from typing import Iterator
 
 from git import BadName, Blob, Tree
 
@@ -24,7 +25,7 @@ class GitSearchFileTool(BaseGitTool):
 
     def properties(self):
         return [
-            *BaseGitTool.properties(),
+            *super().properties(),
             PropertyDefinition("name", description="The name to search for.", required=True),
             PropertyDefinition(
                 "commit",
@@ -32,7 +33,7 @@ class GitSearchFileTool(BaseGitTool):
             ),
         ]
 
-    def execute(self, repository: str, name: str, commit: str = "HEAD", **kwargs):
+    def execute(self, repository: str, name: str, commit: str = "HEAD", *_, **kwargs):
         super().execute(repository=repository, **kwargs)
         out = ""
         try:
@@ -47,5 +48,7 @@ class GitSearchFileTool(BaseGitTool):
             raise ToolPropertyInvalidError(self.name(), "commit") from e
         return ToolMessageResponse(out if out else "(no files found)")
 
-    def _search_tree(self, name: str, tree: Tree) -> list[str]:
-        return [i.path for i in filter(lambda i: isinstance(i, Blob) and fnmatch(i.name, name), tree.traverse())]
+    def _search_tree(self, name: str, tree: Tree) -> Iterator[str]:
+        for i in tree.traverse():
+            if isinstance(i, Blob) and fnmatch(i.name, name):
+                yield str(i.path)

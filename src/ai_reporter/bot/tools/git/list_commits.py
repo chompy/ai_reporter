@@ -22,7 +22,7 @@ class GitListCommitsTool(BaseGitTool):
 
     def properties(self):
         return [
-            *BaseGitTool.properties(),
+            *super().properties(),
             PropertyDefinition(
                 "until",
                 description="If provided, list first %d commits that occured before the date, otherwise list most recent commits. Format: YYYY-MM-DD"

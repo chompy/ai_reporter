@@ -4,6 +4,8 @@
 
 from __future__ import annotations
 
+from typing import Iterator
+
 from git import BadName, Blob, Tree
 
 from ai_reporter.bot.property import PropertyDefinition
@@ -22,7 +24,7 @@ class GitListDirTool(BaseGitTool):
 
     def properties(self):
         return [
-            *BaseGitTool.properties(),
+            *super().properties(),
             PropertyDefinition(
                 "path", description="The path of the directory to list, use the root directory if not provided."
             ),
@@ -46,11 +48,7 @@ class GitListDirTool(BaseGitTool):
             )
             raise ToolPropertyInvalidError(self.name(), "commit") from e
 
-    def _search_tree(self, path: str, tree: Tree) -> list[str]:
-        return [
-            i.path
-            for i in filter(
-                lambda i: isinstance(i, (Blob, Tree)) and i.path == (path.strip("/") + "/" + i.name).lstrip("/"),
-                tree.traverse,
-            )
-        ]
+    def _search_tree(self, path: str, tree: Tree) -> Iterator[str]:
+        for i in tree.traverse():
+            if isinstance(i, (Blob, Tree)) and i.path == (path.strip("/") + "/" + i.name).lstrip("/"):
+                yield str(i.path)

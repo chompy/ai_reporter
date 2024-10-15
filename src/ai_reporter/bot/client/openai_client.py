@@ -169,16 +169,15 @@ class OpenAIClient(BaseClient):
     def _tool_definitions(self, tool_handler: ToolHandler) -> list[ChatCompletionToolParam]:
         out = []
         for tool in tool_handler.tools:
-            tool_config = tool_handler.get_tool_config(tool)
             out.append(
                 ChatCompletionToolParam(
                     function=FunctionDefinition(
                         name=tool.name(),
-                        description=tool.description(**tool_config),
+                        description=tool.description(),
                         parameters={
                             "type": "object",
-                            "properties": {p.name: p.to_dict() for p in tool.properties(**tool_config)},
-                            "required": [p.name for p in filter(lambda p: p.required, tool.properties(**tool_config))],
+                            "properties": {p.name: p.to_dict() for p in tool.properties()},
+                            "required": [p.name for p in filter(lambda p: p.required, tool.properties())],
                         },
                     ),
                     type="function",

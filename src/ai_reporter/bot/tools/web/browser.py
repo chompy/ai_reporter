@@ -337,7 +337,7 @@ class Browser:
             except StaleElementReferenceException:
                 self._wait()
                 self._define_element_labels()
-                return self.screenshot(with_element_labels)
+                return self.screenshot(with_element_labels=with_element_labels)
 
             # write screenshot with labels to byte io
             screenshot_write = io.BytesIO()
@@ -398,6 +398,8 @@ class Browser:
             time.sleep(1)
 
     def _log(self, message: str, params: dict | None = None, level: int = logging.INFO):
+        if params is None:
+            params = {}
         params["_module"] = "browser"
         if self.logger:
             self.logger.log(level, message, extra=params)

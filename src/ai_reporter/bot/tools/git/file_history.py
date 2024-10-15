@@ -19,11 +19,11 @@ class GitFileHistoryTool(BaseGitTool):
 
     def properties(self):
         return [
-            *BaseGitTool.properties(),
+            *super().properties(),
             PropertyDefinition("file", description="The file to view the history of.", required=True),
         ]
 
-    def execute(self, repository: str, file: str, **kwargs):
+    def execute(self, repository: str, file: str, *_, **kwargs):
         super().execute(repository=repository, **kwargs)
         out = ""
         for commit in self.repo.iter_commits(paths=file):
